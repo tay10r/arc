@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 3.14.7)
 
-project(arc_testbed)
+project(arc_testbed
+  DESCRIPTION "A program for testing the ARC software."
+  VERSION 1.0)
+
+if(NOT TARGET arc::sim)
+  add_subdirectory(../simulation simulation)
+endif()
+
+if(NOT TARGET arc::fake_arduino)
+  add_subdirectory(../arduino arduino)
+endif()
+
+if(NOT TARGET arc::autopilot)
+  add_subdirectory(../autopilot autopilot)
+endif()
+
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 include(FetchContent)
 
@@ -9,9 +27,29 @@ set(UIKIT_BUILD_GLFW ON CACHE BOOL "" FORCE)
 FetchContent_Declare(uikit URL "https://github.com/tay10r/uikit/archive/refs/heads/main.zip")
 FetchContent_MakeAvailable(uikit)
 
-add_executable(main
-  main.cpp)
+FetchContent_Declare(glm URL "https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip")
+FetchContent_MakeAvailable(glm)
+
+set(extra_sources)
+if(WIN32)
+  list(APPEND win32/Serial.cpp)
+else()
+  list(APPEND NullSerial.cpp)
+endif()
+
+add_executable(main WIN32
+  main.cpp
+  Simulation.h
+  Simulation.cpp
+  Renderer.h
+  Renderer.cpp
+  Serial.h
+  ${extra_sources})
 
 target_link_libraries(main
   PUBLIC
-    uikit::main)
+    uikit::main
+    glm::glm
+    arc::sim
+    arc::fake_arduino
+    arc::autopilot)

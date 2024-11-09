@@ -40,21 +40,24 @@ auto
 createLunarLander(int seed) -> std::unique_ptr<Env>
 {
   std::mt19937 rng(seed);
-  std::uniform_real_distribution<float> heightDist(-40, -60);
-  std::uniform_real_distribution<float> yDist(-50, 50);
+  std::uniform_real_distribution<float> heightDist(-12, -10);
+  // std::uniform_real_distribution<float> yDist(-9, 9);
+  std::uniform_real_distribution<float> yDist(-2, 2);
 
   auto initPosition = rp3::Vector3(0, yDist(rng), heightDist(rng));
   auto orientation = rp3::Quaternion::fromEulerAngles(0, 0, 0);
   rp3::Transform initTransform(initPosition, orientation);
 
   auto env = std::make_unique<Env>();
-  env->createFloor();
+  env->createFloor(/*size=*/2.0F);
   auto ship = env->createAgent(initTransform);
   auto shape = env->getCommon()->createBoxShape(rp3::Vector3(1, 1, 1));
   ship->getBody()->addCollider(shape, initTransform);
   const auto max_force{ 20.0F };
-  ship->registerAction(std::make_unique<ThrusterAction>(rp3::Vector3(0, 1, 0), rp3::Vector3(0, 0, -1), max_force));
-  ship->registerAction(std::make_unique<ThrusterAction>(rp3::Vector3(0, -1, 0), rp3::Vector3(0, 0, -1), max_force));
+  ship->registerAction(std::make_unique<ThrusterAction>(rp3::Vector3(0, 1, 0), rp3::Vector3(0, 0, -1), max_force),
+                       "r_thrust");
+  ship->registerAction(std::make_unique<ThrusterAction>(rp3::Vector3(0, -1, 0), rp3::Vector3(0, 0, -1), max_force),
+                       "l_thrust");
   return env;
 }
 

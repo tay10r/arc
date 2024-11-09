@@ -9,5 +9,3 @@ public:
 
   void begin(unsigned long baud);
 };
-
-extern HardwareSerial Serial;

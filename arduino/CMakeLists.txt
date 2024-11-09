@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.14.7)
 
-project(fake_arduino)
+project(arc_fake_arduino)
 
-add_library(fake_arduino
+add_library(arc_fake_arduino
   include/Arduino.h
   include/Print.h
   include/Stream.h
@@ -11,6 +11,8 @@ add_library(fake_arduino
   src/Stream.cpp
   src/HardwareSerial.cpp)
 
-target_include_directories(fake_arduino
+target_include_directories(arc_fake_arduino
   PUBLIC
     include)
+
+add_library(arc::fake_arduino ALIAS arc_fake_arduino)

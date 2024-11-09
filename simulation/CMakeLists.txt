@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.14.7)
 
 project(arc_sim)
 
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 include(FetchContent)
 
 FetchContent_Declare(rp3 URL "https://github.com/DanielChappuis/reactphysics3d/archive/refs/tags/v0.10.2.zip")
@@ -22,3 +26,5 @@ target_include_directories(arc_sim
 target_link_libraries(arc_sim
   PUBLIC
     reactphysics3d)
+
+add_library(arc::sim ALIAS arc_sim)

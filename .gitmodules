@@ -1,0 +1,3 @@
+[submodule "autopilot/c_library_v2"]
+	path = autopilot/mavlink
+	url = https://github.com/mavlink/c_library_v2.git
