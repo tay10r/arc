@@ -4,6 +4,8 @@ project(arc_autopilot
   DESCRIPTION "The autopilot software for the ARC project."
   VERSION 1.0)
 
+option(ARC_AUTOPILOT_TESTS "Whether or not to build the unit tests." OFF)
+
 if(NOT TARGET arc::fake_arduino)
   add_subdirectory(../arduino arduino)
 endif()
@@ -19,20 +21,28 @@ add_library(arc_autopilot
   AP_Time.cpp
   NN_Module.h
   NN_Module.cpp
-  NN_Linear.h
-  NN_Linear.cpp
-  NN_ReLU.h
-  NN_ReLU.cpp
   NN_Lexer.h
   NN_Lexer.cpp
   NN_Parser.h
   NN_Parser.cpp
   NN_Interpreter.h
   NN_Interpreter.cpp
+  NN_Net.h
+  NN_Net.cpp
   NN_NetBuilder.h
   NN_NetBuilder.cpp
   NN_NetRunner.h
-  NN_NetRunner.cpp)
+  NN_NetRunner.cpp
+  NN_Loss.h
+  NN_Loss.cpp
+  NN_Optim.h
+  NN_Optim.cpp)
+
+if(CMAKE_COMPILER_IS_GNUCXX AND NOT ARC_NO_WARNINGS)
+  target_compile_options(arc_autopilot
+    PRIVATE
+      -Wall -Wextra -Werror -Wfatal-errors -Wno-address-of-packed-member)
+endif()
 
 target_include_directories(arc_autopilot
   PUBLIC
@@ -43,3 +53,7 @@ target_link_libraries(arc_autopilot
     arc::fake_arduino)
 
 add_library(arc::autopilot ALIAS arc_autopilot)
+
+if(ARC_AUTOPILOT_TESTS)
+  add_subdirectory(tests)
+endif()

@@ -21,6 +21,10 @@ struct Token final
   uint8_t length{};
 
   uint16_t offset{};
+
+  auto operator==(const TokenKind otherKind) const -> bool;
+
+  auto operator!=(const TokenKind otherKind) const -> bool;
 };
 
 class Lexer final
@@ -31,6 +35,8 @@ public:
   [[nodiscard]] auto lex() -> Token;
 
   [[nodiscard]] auto remaining() const -> uint16_t;
+
+  [[nodiscard]] auto toPointer(const uint16_t offset) const -> const char*;
 
 protected:
   [[nodiscard]] auto produceToken(TokenKind kind, uint8_t length) -> Token;

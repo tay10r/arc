@@ -67,7 +67,7 @@ auto
 MAVLinkBus::send(const mavlink_message_t& msg) -> bool
 {
   const auto numBuffers = sizeof(buffers_) / sizeof(buffers_[0]);
-  for (auto i = 0; i < numBuffers; i++) {
+  for (auto i = 0u; i < numBuffers; i++) {
     if (buffers_[i].flags != MAVLinkBufferFlags::kNone) {
       continue;
     }
@@ -83,7 +83,7 @@ auto
 MAVLinkBus::readyToSend() const -> bool
 {
   const auto numBuffers = sizeof(buffers_) / sizeof(buffers_[0]);
-  for (auto i = 0; i < numBuffers; i++) {
+  for (auto i = 0u; i < numBuffers; i++) {
     if (buffers_[i].flags == MAVLinkBufferFlags::kNone) {
       // We found at least one empty buffer, which means we can send a message.
       return true;
