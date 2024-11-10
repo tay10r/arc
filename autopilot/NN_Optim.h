@@ -12,9 +12,9 @@ struct Net;
 class LSOptimizer final
 {
 public:
-  using RngFunc = auto(*)(void*, int32_t minValue, int32_t maxValue) -> int32_t;
+  using RngFunc = auto (*)(void*, int32_t minValue, int32_t maxValue) -> int32_t;
 
-  using LossFunc = auto(*)(void*, const Net& net) -> uint32_t;
+  using LossFunc = auto (*)(void*, const Net& net) -> uint32_t;
 
   /**
    * @brief Constructs a new optimizer object.
@@ -30,7 +30,7 @@ public:
    *
    * @param penalty The weight decay for each step.
    * */
-  LSOptimizer(Net* net, uint32_t batchSize = 16, int8_t noiseMin = -16, int8_t noiseMax = 16, uint8_t penalty = 1);
+  LSOptimizer(Net* net, uint32_t batchSize = 2, int8_t noiseMin = -16, int8_t noiseMax = 16, uint8_t penalty = 1);
 
   [[nodiscard]] auto allocMemory() -> bool;
 

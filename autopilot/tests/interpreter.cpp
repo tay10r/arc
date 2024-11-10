@@ -83,8 +83,8 @@ TEST(NetRunner, LearnXor)
 
   EXPECT_TRUE(optimizer.allocMemory());
 
-  // const auto numEpochs = 10'000'000;
-  const auto numEpochs = 1000;
+  const auto numEpochs = 10'000'000;
+  // const auto numEpochs = 1000;
 
   for (auto i = 0; i < numEpochs; i++) {
 
