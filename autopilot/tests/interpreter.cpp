@@ -48,7 +48,7 @@ struct XorProblem final
 {
   NN::NetRunner* runner;
 
-  const uint8_t* expected;
+  const float* expected;
 
   const char* source;
 
@@ -68,10 +68,10 @@ TEST(NetRunner, LearnXor)
 
   std::mt19937 rng{ seed };
 
-  auto rngFunc = [](void* rngPtr) -> uint8_t {
-    std::uniform_int_distribution<int> dist(0, 255);
+  auto rngFunc = [](void* rngPtr) -> float {
+    std::uniform_real_distribution<float> dist(0, 1);
     const auto v = dist(*static_cast<std::mt19937*>(rngPtr));
-    return static_cast<uint8_t>(v);
+    return v;
   };
 
   net.randomize(&rng, rngFunc);
@@ -79,12 +79,11 @@ TEST(NetRunner, LearnXor)
   NN::NetRunner runner(&net);
 
   NN::LSOptimizer optimizer(&net);
-  // NN::LSOptimizer optimizer(&net, 2, 0, 4, 1);
 
   EXPECT_TRUE(optimizer.allocMemory());
 
-  const auto numEpochs = 10'000'000;
   // const auto numEpochs = 1000;
+  const auto numEpochs = 1'000'000;
 
   for (auto i = 0; i < numEpochs; i++) {
 
@@ -97,32 +96,36 @@ TEST(NetRunner, LearnXor)
     auto* input = runner.getRegister(0);
 
     // op 1
-    input[0] = (l & 1) ? 255 : 0;
-    input[1] = (l & 2) ? 255 : 0;
-    input[2] = (l & 4) ? 255 : 0;
-    input[3] = (l & 8) ? 255 : 0;
+    input[0] = (l & 1) ? 1 : 0;
+    input[1] = (l & 2) ? 1 : 0;
+    input[2] = (l & 4) ? 1 : 0;
+    input[3] = (l & 8) ? 1 : 0;
 
     // op 2
-    input[4] = (r & 1) ? 255 : 0;
-    input[5] = (r & 2) ? 255 : 0;
-    input[6] = (r & 4) ? 255 : 0;
-    input[7] = (r & 8) ? 255 : 0;
+    input[4] = (r & 1) ? 1 : 0;
+    input[5] = (r & 2) ? 1 : 0;
+    input[6] = (r & 4) ? 1 : 0;
+    input[7] = (r & 8) ? 1 : 0;
 
-    const uint8_t target[4]{ static_cast<uint8_t>((result & 1) ? 255 : 0),
-                             static_cast<uint8_t>((result & 2) ? 255 : 0),
-                             static_cast<uint8_t>((result & 4) ? 255 : 0),
-                             static_cast<uint8_t>((result & 8) ? 255 : 0) };
+    const float target[4]{
+      (result & 1) ? 1.0F : 0.0F, (result & 2) ? 1.0F : 0.0F, (result & 4) ? 1.0F : 0.0F, (result & 8) ? 1.0F : 0.0F
+    };
 
     runner.reset();
 
     XorProblem problem{ &runner, &target[0], src, sizeof(src) - 1 };
 
-    auto rngFunc = [](void* rngPtr, int32_t minVal, int32_t maxVal) -> int32_t {
+    auto rngIntFunc = [](void* rngPtr, int32_t minVal, int32_t maxVal) -> int32_t {
       std::uniform_int_distribution<int32_t> dist(minVal, maxVal - 1);
       return dist(*static_cast<std::mt19937*>(rngPtr));
     };
 
-    auto lossFunc = [](void* lossData, const NN::Net& net) -> uint32_t {
+    auto rngFloatFunc = [](void* rngPtr, float minVal, float maxVal) -> float {
+      std::uniform_real_distribution<float> dist(minVal, maxVal);
+      return dist(*static_cast<std::mt19937*>(rngPtr));
+    };
+
+    auto lossFunc = [](void* lossData, const NN::Net& net) -> float {
       auto* problem = static_cast<XorProblem*>(lossData);
       EXPECT_EQ(NN::exec(problem->source, problem->sourceLen, *problem->runner), NN::SyntaxError::kNone);
       const auto* output = problem->runner->getRegister(2);
@@ -130,7 +133,7 @@ TEST(NetRunner, LearnXor)
       return loss;
     };
 
-    const auto loss = optimizer.step(&rng, rngFunc, &problem, lossFunc);
+    const auto loss = optimizer.step(&rng, rngIntFunc, rngFloatFunc, &problem, lossFunc);
 
     std::cout << static_cast<int>(loss) << std::endl;
   }

@@ -3,9 +3,9 @@
 namespace NN {
 
 [[nodiscard]] auto
-l1Loss(const uint8_t* predicted, const uint8_t* target, const uint16_t size) -> uint32_t
+l1Loss(const float* predicted, const float* target, const uint16_t size) -> float
 {
-  uint32_t loss{};
+  float loss{};
 
   for (uint16_t i = 0; i < size; i++) {
     const auto p = predicted[i];

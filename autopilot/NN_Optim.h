@@ -12,9 +12,11 @@ struct Net;
 class LSOptimizer final
 {
 public:
-  using RngFunc = auto (*)(void*, int32_t minValue, int32_t maxValue) -> int32_t;
+  using RngIntFunc = auto(*)(void*, int32_t minValue, int32_t maxValue) -> int32_t;
 
-  using LossFunc = auto (*)(void*, const Net& net) -> uint32_t;
+  using RngFloatFunc = auto(*)(void*, float minValue, float maxValue) -> float;
+
+  using LossFunc = auto(*)(void*, const Net& net) -> float;
 
   /**
    * @brief Constructs a new optimizer object.
@@ -30,18 +32,20 @@ public:
    *
    * @param penalty The weight decay for each step.
    * */
-  LSOptimizer(Net* net, uint32_t batchSize = 2, int8_t noiseMin = -16, int8_t noiseMax = 16, uint8_t penalty = 1);
+  LSOptimizer(Net* net,
+              uint32_t batchSize = 4,
+              float noiseMin = -0.01F,
+              float noiseMax = 0.01F,
+              float penalty = 1.0e-2F);
 
   [[nodiscard]] auto allocMemory() -> bool;
 
   void releaseMemory();
 
-  auto step(void* rngData, RngFunc rng, void* lossData, LossFunc loss) -> uint32_t;
+  auto step(void* rngData, RngIntFunc rngInt, RngFloatFunc rngFloat, void* lossData, LossFunc loss) -> float;
 
 protected:
-  void shuffleIndices(void* rngData, RngFunc rng);
-
-  void addNoise();
+  void shuffleIndices(void* rngData, RngIntFunc rng);
 
 private:
   Net* net_{};
@@ -50,15 +54,15 @@ private:
 
   uint32_t batchIndex_{};
 
-  int8_t noiseMin_{};
+  float noiseMin_{};
 
-  int8_t noiseMax_{};
+  float noiseMax_{};
 
-  uint8_t penalty_{};
+  float penalty_{};
 
-  uint32_t bestLoss_{ static_cast<uint32_t>(~0ul) };
+  float bestLoss_{ static_cast<float>(1.0e6F) };
 
-  uint8_t* bestParameters_{};
+  float* bestParameters_{};
 
   uint32_t* indices_{};
 };

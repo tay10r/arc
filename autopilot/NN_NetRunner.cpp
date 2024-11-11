@@ -2,8 +2,6 @@
 
 #include "NN_Net.h"
 
-#include <assert.h>
-
 namespace NN {
 
 NetRunner::NetRunner(const Net* net)
@@ -12,7 +10,7 @@ NetRunner::NetRunner(const Net* net)
 }
 
 auto
-NetRunner::getRegister(const uint8_t reg) -> uint8_t*
+NetRunner::getRegister(const uint8_t reg) -> float*
 {
   return net_->regs[reg];
 }
@@ -37,25 +35,22 @@ NetRunner::interpret(const LinearExpr& expr)
 
   const auto* params = currentParameters_;
 
+  const auto* weights = params;
+
+  const auto* bias = weights + expr.inFeatures * expr.outFeatures;
+
   for (uint32_t i = 0; i < static_cast<uint32_t>(expr.outFeatures); i++) {
 
-    uint32_t out{};
+    float out{};
 
     for (uint32_t j = 0; j < static_cast<uint32_t>(expr.inFeatures); j++) {
-      const auto in = static_cast<uint32_t>(input[j]);
-      const auto weight = static_cast<uint32_t>(params[i * static_cast<uint32_t>(expr.inFeatures) + j]);
+      const auto in = input[j];
+      const auto weight = params[i * static_cast<uint32_t>(expr.inFeatures) + j];
       const auto v = in * weight;
-      out += static_cast<uint32_t>(v);
+      out += v;
     }
 
-    // TODO: fix normalization
-    // TODO: add bias
-    // out <<= 8 + (1 + (inFeatures));
-    out >>= 8 + 3;
-
-    assert(out < 256);
-
-    net_->regs[currentReg_][i] = static_cast<uint8_t>(out);
+    net_->regs[currentReg_][i] = out + bias[i];
   }
 
   currentParameters_ += expr.inFeatures * expr.outFeatures + expr.outFeatures;
@@ -72,7 +67,7 @@ NetRunner::interpret(const ReLUExpr& expr)
 
   for (uint32_t i = 0; i < numFeatures; i++) {
     const auto in = input[i];
-    output[i] = (in > 128) ? in : 128;
+    output[i] = (in >= 0.0F) ? in : 0.0F;
   }
 }
 

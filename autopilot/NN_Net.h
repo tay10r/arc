@@ -12,9 +12,16 @@ struct Net final
 
   uint16_t regSizes[NN_MAX_REGS]{};
 
-  uint8_t* parameters{};
+  float* parameters{};
 
-  uint8_t* regs[NN_MAX_REGS]{};
+  float* regs[NN_MAX_REGS]{};
+
+  /**
+   * @brief Attempts to allocate the parameters and registers in the network.
+   *
+   * @return True on success, false on failure.
+   * */
+  [[nodiscard]] auto allocMemory() -> bool;
 
   /**
    * @brief Releases memory allocated by the registers and parameters.
@@ -24,7 +31,7 @@ struct Net final
   /**
    * @brief Randomizes the parameters.
    * */
-  void randomize(void* rngData, auto(*rngFunc)(void*)->uint8_t);
+  void randomize(void* rngData, auto(*rngFunc)(void*)->float);
 };
 
 } // namespace NN

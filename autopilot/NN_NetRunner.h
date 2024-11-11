@@ -10,7 +10,7 @@ class NetRunner final : public Interpreter
 public:
   NetRunner(const Net* net);
 
-  [[nodiscard]] auto getRegister(uint8_t reg) -> uint8_t*;
+  [[nodiscard]] auto getRegister(uint8_t reg) -> float*;
 
   void reset();
 
@@ -31,7 +31,7 @@ private:
   /**
    * @brief The current set of weights and bias.
    * */
-  uint8_t* currentParameters_{};
+  float* currentParameters_{};
 
   /**
    * @brief The current size of each register.

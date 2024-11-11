@@ -16,21 +16,7 @@ NetBuilder::NetBuilder(Net* net, const uint16_t inputSize)
 auto
 NetBuilder::finish() -> bool
 {
-  size_t allocSize = net_->numParameters;
-  for (uint8_t i = 0; i < NN_MAX_REGS; i++) {
-    allocSize += net_->regSizes[i];
-  }
-  auto* memory = static_cast<uint8_t*>(malloc(allocSize));
-  if (!memory) {
-    return false;
-  }
-  net_->parameters = memory;
-  memory += net_->numParameters;
-  for (uint8_t i = 0; i < NN_MAX_REGS; i++) {
-    net_->regs[i] = memory;
-    memory += net_->regSizes[i];
-  }
-  return true;
+  return net_->allocMemory();
 }
 
 void

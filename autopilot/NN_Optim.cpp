@@ -9,9 +9,9 @@ namespace NN {
 
 LSOptimizer::LSOptimizer(Net* net,
                          const uint32_t batchSize,
-                         const int8_t noiseMin,
-                         const int8_t noiseMax,
-                         const uint8_t penalty)
+                         const float noiseMin,
+                         const float noiseMax,
+                         const float penalty)
   : net_(net)
   , batchSize_(batchSize)
   , noiseMin_(noiseMin)
@@ -23,7 +23,7 @@ LSOptimizer::LSOptimizer(Net* net,
 auto
 LSOptimizer::allocMemory() -> bool
 {
-  bestParameters_ = static_cast<uint8_t*>(malloc(net_->numParameters));
+  bestParameters_ = static_cast<float*>(malloc(net_->numParameters * sizeof(float)));
   if (!bestParameters_) {
     return false;
   }
@@ -39,7 +39,7 @@ LSOptimizer::allocMemory() -> bool
     indices_[i] = i;
   }
 
-  memcpy(bestParameters_, net_->parameters, net_->numParameters);
+  memcpy(bestParameters_, net_->parameters, net_->numParameters * sizeof(float));
 
   return true;
 }
@@ -53,23 +53,11 @@ LSOptimizer::releaseMemory()
   indices_ = nullptr;
 }
 
-namespace {
-
 auto
-clamp(int32_t x) -> int32_t
-{
-  x = (x < 0) ? 0 : x;
-  x = (x > 255) ? 255 : x;
-  return x;
-}
-
-} // namespace
-
-auto
-LSOptimizer::step(void* rngData, RngFunc rng, void* lossData, LossFunc loss) -> uint32_t
+LSOptimizer::step(void* rngData, RngIntFunc rngInt, RngFloatFunc rngFloat, void* lossData, LossFunc loss) -> float
 {
   if (batchIndex_ == 0) {
-    shuffleIndices(rngData, rng);
+    shuffleIndices(rngData, rngInt);
   }
 
   const auto paramOffset = batchIndex_ * batchSize_;
@@ -79,20 +67,19 @@ LSOptimizer::step(void* rngData, RngFunc rng, void* lossData, LossFunc loss) -> 
   const auto safeParamEnd = (paramEnd > net_->numParameters) ? net_->numParameters : paramEnd;
 
   for (auto i = paramOffset; i < safeParamEnd; i++) {
-    const auto noise = rng(rngData, static_cast<int32_t>(noiseMin_), static_cast<int32_t>(noiseMax_) + 1);
+    const auto noise = rngFloat(rngData, noiseMin_, noiseMax_);
     const auto idx = indices_[i];
-    const auto param = static_cast<int32_t>(net_->parameters[idx]) + noise;
-    net_->parameters[idx] = static_cast<uint8_t>(clamp(param));
+    net_->parameters[idx] += noise;
   }
 
   const auto l = loss(lossData, *net_);
   if (l < bestLoss_) {
     bestLoss_ = l;
-    memcpy(bestParameters_, net_->parameters, net_->numParameters);
+    memcpy(bestParameters_, net_->parameters, net_->numParameters * sizeof(float));
   } else {
     // restore best model
     // TODO : find a faster way to do this
-    memcpy(net_->parameters, bestParameters_, net_->numParameters);
+    memcpy(net_->parameters, bestParameters_, net_->numParameters * sizeof(float));
   }
 
   bestLoss_ += penalty_;
@@ -107,7 +94,7 @@ LSOptimizer::step(void* rngData, RngFunc rng, void* lossData, LossFunc loss) -> 
 }
 
 void
-LSOptimizer::shuffleIndices(void* rngData, RngFunc func)
+LSOptimizer::shuffleIndices(void* rngData, RngIntFunc func)
 {
   for (uint32_t i = 0; i < (net_->numParameters - 1); i++) {
     const auto j = func(rngData, i, net_->numParameters);
