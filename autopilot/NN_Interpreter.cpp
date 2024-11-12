@@ -12,6 +12,24 @@ LinearExpr::accept(Interpreter& interp) const
 }
 
 void
+ConcatExpr::accept(Interpreter& interp) const
+{
+  interp.interpret(*this);
+}
+
+void
+CompAddExpr::accept(Interpreter& interp) const
+{
+  interp.interpret(*this);
+}
+
+void
+CompMulExpr::accept(Interpreter& interp) const
+{
+  interp.interpret(*this);
+}
+
+void
 ReLUExpr::accept(Interpreter& interp) const
 {
   interp.interpret(*this);
@@ -19,6 +37,12 @@ ReLUExpr::accept(Interpreter& interp) const
 
 void
 SigmoidExpr::accept(Interpreter& interp) const
+{
+  interp.interpret(*this);
+}
+
+void
+TanhExpr::accept(Interpreter& interp) const
 {
   interp.interpret(*this);
 }

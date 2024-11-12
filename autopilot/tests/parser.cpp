@@ -15,7 +15,17 @@ public:
 
   void interpret(const NN::LinearExpr&) override {}
 
+  void interpret(const NN::ConcatExpr&) override {}
+
+  void interpret(const NN::CompAddExpr&) override {}
+
+  void interpret(const NN::CompMulExpr&) override {}
+
   void interpret(const NN::ReLUExpr&) override {}
+
+  void interpret(const NN::SigmoidExpr&) override {}
+
+  void interpret(const NN::TanhExpr&) override {}
 };
 
 auto
@@ -79,16 +89,35 @@ public:
 
   void beginAssignment(uint8_t dstReg) override { stream_ << '%' << static_cast<int>(dstReg) << " = "; }
 
-  void interpret(const NN::ReLUExpr& expr) override
-  {
-    stream_ << "ReLU %" << static_cast<int>(expr.inRegister) << '\n';
-  }
-
   void interpret(const NN::LinearExpr& expr) override
   {
     stream_ << "Linear " << static_cast<int>(expr.inFeatures) << ' ' << static_cast<int>(expr.outFeatures) << " %"
             << static_cast<int>(expr.inRegister) << '\n';
   }
+
+  void interpret(const NN::ConcatExpr& expr) override
+  {
+    //
+  }
+
+  void interpret(const NN::CompAddExpr& expr) override
+  {
+    //
+  }
+
+  void interpret(const NN::CompMulExpr& expr) override
+  {
+    //
+  }
+
+  void interpret(const NN::ReLUExpr& expr) override
+  {
+    stream_ << "ReLU %" << static_cast<int>(expr.inRegister) << '\n';
+  }
+
+  void interpret(const NN::SigmoidExpr&) override {}
+
+  void interpret(const NN::TanhExpr&) override {}
 
 private:
   std::ostringstream stream_;

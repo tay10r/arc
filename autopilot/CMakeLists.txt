@@ -41,8 +41,8 @@ add_library(arc_autopilot
   NN_Optim.cpp
   RL_Policy.h
   RL_Policy.cpp
-  RL_DQN.h
-  RL_DQN.cpp)
+  RL_DDPG.h
+  RL_DDPG.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT ARC_NO_WARNINGS)
   target_compile_options(arc_autopilot

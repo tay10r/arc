@@ -7,8 +7,12 @@ namespace NN {
 enum class SyntaxError : uint8_t;
 
 struct LinearExpr;
+struct ConcatExpr;
+struct CompAddExpr;
+struct CompMulExpr;
 struct ReLUExpr;
 struct SigmoidExpr;
+struct TanhExpr;
 
 class Interpreter
 {
@@ -19,9 +23,17 @@ public:
 
   virtual void interpret(const LinearExpr&) = 0;
 
+  virtual void interpret(const ConcatExpr&) = 0;
+
+  virtual void interpret(const CompAddExpr&) = 0;
+
+  virtual void interpret(const CompMulExpr&) = 0;
+
   virtual void interpret(const ReLUExpr&) = 0;
 
   virtual void interpret(const SigmoidExpr&) = 0;
+
+  virtual void interpret(const TanhExpr&) = 0;
 };
 
 struct Expr
@@ -42,19 +54,46 @@ struct LinearExpr final : public Expr
   void accept(Interpreter& interp) const override;
 };
 
-struct ActivationExpr : public Expr
+struct BinaryExpr : public Expr
 {
-  uint8_t inRegister{};
+  uint8_t leftOpReg{};
 
-  ~ActivationExpr() override = default;
+  uint8_t rightOpReg{};
 };
 
-struct ReLUExpr final : public ActivationExpr
+struct ConcatExpr final : public BinaryExpr
 {
   void accept(Interpreter& interp) const override;
 };
 
-struct SigmoidExpr final : public ActivationExpr
+struct CompAddExpr final : public BinaryExpr
+{
+  void accept(Interpreter& interp) const override;
+};
+
+struct CompMulExpr final : public BinaryExpr
+{
+  void accept(Interpreter& interp) const override;
+};
+
+struct UnaryExpr : public Expr
+{
+  uint8_t inRegister{};
+
+  ~UnaryExpr() override = default;
+};
+
+struct ReLUExpr final : public UnaryExpr
+{
+  void accept(Interpreter& interp) const override;
+};
+
+struct SigmoidExpr final : public UnaryExpr
+{
+  void accept(Interpreter& interp) const override;
+};
+
+struct TanhExpr final : public UnaryExpr
 {
   void accept(Interpreter& interp) const override;
 };

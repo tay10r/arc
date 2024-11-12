@@ -9,6 +9,8 @@
 #include <NN_Optim.h>
 #include <NN_Parser.h>
 
+#include <cstring>
+
 #include <iostream>
 
 namespace {
@@ -44,101 +46,146 @@ TEST(NetBuilder, Minimal)
 
 namespace {
 
-struct XorProblem final
+class XorTest final
 {
-  NN::NetRunner* runner;
+public:
+  XorTest(const std::string& src)
+    : source_(src)
+    , net_(buildNet(source_, 8))
+  {
+  }
 
-  const float* expected;
+  ~XorTest()
+  {
+    net_.releaseMemory();
 
-  const char* source;
+    optimizer_.releaseMemory();
+  }
 
-  uint16_t sourceLen;
+  void trainNet(const int numIterations)
+  {
+    randomizeWeights(net_);
+
+    EXPECT_TRUE(optimizer_.allocMemory());
+
+    for (auto i = 0; i < numIterations; i++) {
+      (void)optimizer_.step(this, randomInt, randomFloat, this, computeLoss);
+    }
+  }
+
+  void eval(const float* op1, const float* op2, float* out)
+  {
+    auto* in = runner_.getRegister(0);
+    std::memcpy(in, op1, 4 * sizeof(float));
+    std::memcpy(in + 4, op2, 4 * sizeof(float));
+
+    runner_.reset();
+
+    EXPECT_EQ(NN::exec(source_.c_str(), source_.size(), runner_), NN::SyntaxError::kNone);
+
+    std::memcpy(out, runner_.getRegister(1), 4 * sizeof(float));
+  }
+
+protected:
+  static void bitsToFloat(const int bits, float* out)
+  {
+    out[0] = (bits & 1) ? 1.0F : 0.0F;
+    out[1] = (bits & 2) ? 1.0F : 0.0F;
+    out[2] = (bits & 4) ? 1.0F : 0.0F;
+    out[3] = (bits & 8) ? 1.0F : 0.0F;
+  }
+
+  [[nodiscard]] static auto computeLoss(void* selfPtr, const NN::Net& net) -> float
+  {
+    auto* self = static_cast<XorTest*>(selfPtr);
+
+    const auto numSamples = 512;
+
+    std::uniform_int_distribution<int> opDist(0, 15);
+
+    float lossSum{};
+
+    for (auto i = 0; i < numSamples; i++) {
+
+      const auto a = opDist(self->rng_);
+      const auto b = opDist(self->rng_);
+
+      bitsToFloat(a, self->runner_.getRegister(0));
+      bitsToFloat(b, self->runner_.getRegister(0) + 4);
+
+      self->runner_.reset();
+
+      EXPECT_EQ(NN::exec(self->source_.c_str(), self->source_.size(), self->runner_), NN::SyntaxError::kNone);
+
+      const auto* output = self->runner_.getRegister(1);
+
+      float expected[4]{};
+
+      bitsToFloat(a ^ b, expected);
+
+      const auto loss = NN::mseLoss(output, expected, 4);
+
+      lossSum += loss;
+    }
+
+    return lossSum / numSamples;
+  }
+
+  [[nodiscard]] static auto randomInt(void* selfPtr, int32_t minVal, int32_t maxVal) -> int32_t
+  {
+    std::uniform_int_distribution<int32_t> dist(minVal, maxVal - 1);
+    return dist(static_cast<XorTest*>(selfPtr)->rng_);
+  }
+
+  [[nodiscard]] static auto randomFloat(void* selfPtr, float minVal, float maxVal) -> float
+  {
+    std::uniform_real_distribution<float> dist(minVal, maxVal);
+    return dist(static_cast<XorTest*>(selfPtr)->rng_);
+  };
+
+  void randomizeWeights(NN::Net& net)
+  {
+    auto rngFunc = [](void* rngPtr) -> float {
+      std::uniform_real_distribution<float> dist(-1, 1);
+      const auto v = dist(*static_cast<std::mt19937*>(rngPtr));
+      return v;
+    };
+
+    net.randomize(&rng_, rngFunc);
+  }
+
+private:
+  std::string source_;
+
+  std::mt19937 rng_{ 0 };
+
+  NN::Net net_;
+
+  NN::NetRunner runner_{ &net_ };
+
+  NN::LSOptimizer optimizer_{ &net_, /*batch_size=*/4 };
 };
 
 } // namespace
 
 TEST(NetRunner, LearnXor)
 {
-  const char src[] = "%1 = Linear 8 8 %0\n"
-                     "%2 = Linear 8 4 %1\n";
+  const char src[] = "%2 = Linear 8 8 %0\n"
+                     "%3 = Linear 8 4 %2\n"
+                     "%1 = Sigmoid %3\n";
 
-  auto net = buildNet(src, 8);
+  XorTest test(src);
 
-  std::seed_seq seed{ 0 };
+  test.trainNet(/*numIterations=*/10'000);
 
-  std::mt19937 rng{ seed };
+  const float op1[4]{ 1, 0, 1, 1 };
+  const float op2[4]{ 0, 0, 1, 0 };
+  float output[4]{};
 
-  auto rngFunc = [](void* rngPtr) -> float {
-    std::uniform_real_distribution<float> dist(-1, 1);
-    const auto v = dist(*static_cast<std::mt19937*>(rngPtr));
-    return v;
-  };
+  test.eval(op1, op2, output);
 
-  net.randomize(&rng, rngFunc);
-
-  NN::NetRunner runner(&net);
-
-  NN::LSOptimizer optimizer(&net);
-
-  EXPECT_TRUE(optimizer.allocMemory());
-
-  // const auto numEpochs = 1000;
-  const auto numEpochs = 1'000'000;
-
-  for (auto i = 0; i < numEpochs; i++) {
-
-    // generate input data
-    std::uniform_int_distribution<int> opDist(0, 15);
-    const auto l = opDist(rng);
-    const auto r = opDist(rng);
-    const auto result = l ^ r;
-
-    auto* input = runner.getRegister(0);
-
-    // op 1
-    input[0] = (l & 1) ? 1 : 0;
-    input[1] = (l & 2) ? 1 : 0;
-    input[2] = (l & 4) ? 1 : 0;
-    input[3] = (l & 8) ? 1 : 0;
-
-    // op 2
-    input[4] = (r & 1) ? 1 : 0;
-    input[5] = (r & 2) ? 1 : 0;
-    input[6] = (r & 4) ? 1 : 0;
-    input[7] = (r & 8) ? 1 : 0;
-
-    const float target[4]{
-      (result & 1) ? 1.0F : 0.0F, (result & 2) ? 1.0F : 0.0F, (result & 4) ? 1.0F : 0.0F, (result & 8) ? 1.0F : 0.0F
-    };
-
-    runner.reset();
-
-    XorProblem problem{ &runner, &target[0], src, sizeof(src) - 1 };
-
-    auto rngIntFunc = [](void* rngPtr, int32_t minVal, int32_t maxVal) -> int32_t {
-      std::uniform_int_distribution<int32_t> dist(minVal, maxVal - 1);
-      return dist(*static_cast<std::mt19937*>(rngPtr));
-    };
-
-    auto rngFloatFunc = [](void* rngPtr, float minVal, float maxVal) -> float {
-      std::uniform_real_distribution<float> dist(minVal, maxVal);
-      return dist(*static_cast<std::mt19937*>(rngPtr));
-    };
-
-    auto lossFunc = [](void* lossData, const NN::Net& net) -> float {
-      auto* problem = static_cast<XorProblem*>(lossData);
-      EXPECT_EQ(NN::exec(problem->source, problem->sourceLen, *problem->runner), NN::SyntaxError::kNone);
-      const auto* output = problem->runner->getRegister(2);
-      const auto loss = NN::l1Loss(output, problem->expected, 4);
-      return loss;
-    };
-
-    const auto loss = optimizer.step(&rng, rngIntFunc, rngFloatFunc, &problem, lossFunc);
-
-    std::cout << static_cast<int>(loss) << std::endl;
-  }
-
-  optimizer.releaseMemory();
-
-  net.releaseMemory();
+  EXPECT_NEAR(output[0], 1.0F, 0.45F);
+  EXPECT_NEAR(output[1], 0.0F, 0.45F);
+  EXPECT_NEAR(output[2], 0.0F, 0.45F);
+  EXPECT_NEAR(output[3], 1.0F, 0.45F);
 }

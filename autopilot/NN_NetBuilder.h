@@ -16,9 +16,17 @@ public:
 
   void interpret(const LinearExpr&) override;
 
+  void interpret(const ConcatExpr&) override;
+
+  void interpret(const CompAddExpr&) override;
+
+  void interpret(const CompMulExpr&) override;
+
   void interpret(const ReLUExpr&) override;
 
   void interpret(const SigmoidExpr&) override;
+
+  void interpret(const TanhExpr&) override;
 
   [[nodiscard]] auto finish() -> bool;
 

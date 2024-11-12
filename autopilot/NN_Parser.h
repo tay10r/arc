@@ -19,14 +19,6 @@ enum class SyntaxError : uint8_t
   kInvalidOperand
 };
 
-enum class KnownIdentifier : uint8_t
-{
-  kUnknown,
-  kLinear,
-  kReLU,
-  kSigmoid
-};
-
 class Parser final
 {
 public:

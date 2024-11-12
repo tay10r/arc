@@ -15,6 +15,18 @@ matchIdentifier(const char* aPtr, const uint16_t aLen, const char* bPtr, const u
   return (aLen == bLen) && (memcmp(aPtr, bPtr, aLen) == 0);
 }
 
+enum class KnownIdentifier : uint8_t
+{
+  kUnknown,
+  kLinear,
+  kConcat,
+  kCompAdd,
+  kCompMul,
+  kReLU,
+  kSigmoid,
+  kTanh
+};
+
 [[nodiscard]] auto
 parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier
 {
@@ -28,8 +40,12 @@ parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier
   } while (0)
 
   MATCH_IDENTIFIER(kLinear, "Linear");
+  MATCH_IDENTIFIER(kConcat, "Concat");
+  MATCH_IDENTIFIER(kCompAdd, "CompAdd");
+  MATCH_IDENTIFIER(kCompMul, "CompMul");
   MATCH_IDENTIFIER(kReLU, "ReLU");
   MATCH_IDENTIFIER(kSigmoid, "Sigmoid");
+  MATCH_IDENTIFIER(kTanh, "Tanh");
 
 #undef MATCH_IDENTIFIER
 
@@ -185,6 +201,35 @@ parseActivation(const Lexer& lexer, const Token& regToken, Interpreter& interp) 
   return SyntaxError::kNone;
 }
 
+template<typename BinaryExprT>
+auto
+parseBinaryExpr(Lexer& lexer, Interpreter& interp) -> SyntaxError
+{
+  BinaryExprT expr;
+
+  const auto lToken = nextToken(lexer);
+  if (lToken != TokenKind::kRegister) {
+    return SyntaxError::kInvalidOperand;
+  }
+  auto err = parseRegister(lexer, lToken, &expr.leftOpReg);
+  if (err != SyntaxError::kNone) {
+    return err;
+  }
+
+  const auto rToken = nextToken(lexer);
+  if (rToken != TokenKind::kRegister) {
+    return SyntaxError::kInvalidOperand;
+  }
+  err = parseRegister(lexer, rToken, &expr.rightOpReg);
+  if (err != SyntaxError::kNone) {
+    return err;
+  }
+
+  expr.accept(interp);
+
+  return SyntaxError::kNone;
+}
+
 } // namespace
 
 auto
@@ -196,10 +241,18 @@ Parser::parseFunctionExpr(Lexer& lexer, const Token& funcId) -> SyntaxError
       break;
     case KnownIdentifier::kLinear:
       return parseLinearExpr(lexer);
+    case KnownIdentifier::kConcat:
+      return parseBinaryExpr<ConcatExpr>(lexer, *interpreter_);
+    case KnownIdentifier::kCompAdd:
+      return parseBinaryExpr<CompAddExpr>(lexer, *interpreter_);
+    case KnownIdentifier::kCompMul:
+      return parseBinaryExpr<CompMulExpr>(lexer, *interpreter_);
     case KnownIdentifier::kReLU:
       return parseActivation<ReLUExpr>(lexer, nextToken(lexer), *interpreter_);
     case KnownIdentifier::kSigmoid:
       return parseActivation<SigmoidExpr>(lexer, nextToken(lexer), *interpreter_);
+    case KnownIdentifier::kTanh:
+      return parseActivation<TanhExpr>(lexer, nextToken(lexer), *interpreter_);
   }
   return SyntaxError::kUnknownFunction;
 }

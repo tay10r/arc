@@ -61,6 +61,62 @@ NetRunner::interpret(const LinearExpr& expr)
 }
 
 void
+NetRunner::interpret(const ConcatExpr& expr)
+{
+  const auto* leftOp = net_->regs[expr.leftOpReg];
+  const auto* rightOp = net_->regs[expr.rightOpReg];
+  auto* output = net_->regs[currentReg_];
+  const auto lSize = regSizes_[expr.leftOpReg];
+  const auto rSize = regSizes_[expr.rightOpReg];
+
+  for (uint32_t i = 0; i < lSize; i++) {
+    output[i] = leftOp[i];
+  }
+
+  for (uint32_t i = 0; i < rSize; i++) {
+    output[lSize + i] = rightOp[i];
+  }
+
+  regSizes_[currentReg_] = lSize + rSize;
+}
+
+void
+NetRunner::interpret(const CompAddExpr& expr)
+{
+  const auto* leftOp = net_->regs[expr.leftOpReg];
+  const auto* rightOp = net_->regs[expr.rightOpReg];
+  auto* output = net_->regs[currentReg_];
+  const auto lSize = regSizes_[expr.leftOpReg];
+  const auto rSize = regSizes_[expr.rightOpReg];
+
+  const auto minSize = (lSize < rSize) ? lSize : rSize;
+
+  for (uint32_t i = 0; i < minSize; i++) {
+    output[i] = leftOp[i] + rightOp[i];
+  }
+
+  regSizes_[currentReg_] = lSize + rSize;
+}
+
+void
+NetRunner::interpret(const CompMulExpr& expr)
+{
+  const auto* leftOp = net_->regs[expr.leftOpReg];
+  const auto* rightOp = net_->regs[expr.rightOpReg];
+  auto* output = net_->regs[currentReg_];
+  const auto lSize = regSizes_[expr.leftOpReg];
+  const auto rSize = regSizes_[expr.rightOpReg];
+
+  const auto minSize = (lSize < rSize) ? lSize : rSize;
+
+  for (uint32_t i = 0; i < minSize; i++) {
+    output[i] = leftOp[i] * rightOp[i];
+  }
+
+  regSizes_[currentReg_] = lSize + rSize;
+}
+
+void
 NetRunner::interpret(const ReLUExpr& expr)
 {
   const auto numFeatures = regSizes_[expr.inRegister];
@@ -81,9 +137,7 @@ void
 NetRunner::interpret(const SigmoidExpr& expr)
 {
   const auto numFeatures = regSizes_[expr.inRegister];
-
   const auto* input = net_->regs[expr.inRegister];
-
   auto* output = net_->regs[currentReg_];
 
   for (uint32_t i = 0; i < numFeatures; i++) {
@@ -91,6 +145,21 @@ NetRunner::interpret(const SigmoidExpr& expr)
     output[i] = ex / (1.0F + ex);
   }
 
+  regSizes_[currentReg_] = regSizes_[expr.inRegister];
+}
+
+void
+NetRunner::interpret(const TanhExpr& expr)
+{
+  const auto numFeatures = regSizes_[expr.inRegister];
+  const auto* input = net_->regs[expr.inRegister];
+  auto* output = net_->regs[currentReg_];
+
+  for (uint32_t i = 0; i < numFeatures; i++) {
+    const auto a = expf(input[i]);
+    const auto b = expf(-input[i]);
+    output[i] = (a - b) / (a + b);
+  }
   regSizes_[currentReg_] = regSizes_[expr.inRegister];
 }
 

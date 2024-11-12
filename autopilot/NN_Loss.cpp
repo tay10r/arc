@@ -2,7 +2,7 @@
 
 namespace NN {
 
-[[nodiscard]] auto
+auto
 l1Loss(const float* predicted, const float* target, const uint16_t size) -> float
 {
   float loss{};
@@ -18,6 +18,19 @@ l1Loss(const float* predicted, const float* target, const uint16_t size) -> floa
   }
 
   return loss;
+}
+
+auto
+mseLoss(const float* predicted, const float* target, const uint16_t size) -> float
+{
+  float loss{};
+
+  for (uint16_t i = 0; i < size; i++) {
+    const auto delta = target[i] - predicted[i];
+    loss += delta * delta;
+  }
+
+  return loss / size;
 }
 
 } // namespace NN
