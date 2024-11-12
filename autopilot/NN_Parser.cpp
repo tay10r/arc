@@ -7,6 +7,93 @@
 
 namespace NN {
 
+namespace {
+
+[[nodiscard]] auto
+matchIdentifier(const char* aPtr, const uint16_t aLen, const char* bPtr, const uint16_t bLen) -> bool
+{
+  return (aLen == bLen) && (memcmp(aPtr, bPtr, aLen) == 0);
+}
+
+[[nodiscard]] auto
+parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier
+{
+  const char* idPtr = lexer.toPointer(identifier.offset);
+
+#define MATCH_IDENTIFIER(enumValue, text)                                                                              \
+  do {                                                                                                                 \
+    if (matchIdentifier(idPtr, identifier.length, text, sizeof(text) - 1)) {                                           \
+      return KnownIdentifier::enumValue;                                                                               \
+    }                                                                                                                  \
+  } while (0)
+
+  MATCH_IDENTIFIER(kLinear, "Linear");
+  MATCH_IDENTIFIER(kReLU, "ReLU");
+  MATCH_IDENTIFIER(kSigmoid, "Sigmoid");
+
+#undef MATCH_IDENTIFIER
+
+  return KnownIdentifier::kUnknown;
+}
+
+[[nodiscard]] auto
+nextToken(Lexer& lexer) -> Token
+{
+  Token token{};
+  while (lexer.remaining() > 0) {
+    token = lexer.lex();
+    if (token.kind != TokenKind::kIgnore) {
+      break;
+    }
+  }
+  return token;
+}
+
+[[nodiscard]] auto
+parseNumber(const Lexer& lexer, const Token& token, uint16_t* out) -> SyntaxError
+{
+  const auto* ptr = lexer.toPointer(token.offset);
+  const auto len = token.length;
+  uint16_t v{};
+  for (uint8_t i = 0; i < len; i++) {
+    const auto c = ptr[i];
+    auto next = static_cast<uint32_t>(v);
+    next *= 10;
+    next += static_cast<uint8_t>(c - '0');
+    if (next > 65535) {
+      // overflow
+      return SyntaxError::kNumberOutOfBounds;
+    }
+    v = next;
+  }
+  *out = v;
+  return SyntaxError::kNone;
+}
+
+[[nodiscard]] auto
+parseRegister(const Lexer& lexer, const Token& regToken, uint8_t* out) -> SyntaxError
+{
+  // +1 since the first character is '%'
+  const auto* ptr = lexer.toPointer(regToken.offset) + 1;
+  const auto len = regToken.length - 1;
+  uint8_t v{};
+  for (uint8_t i = 0; i < len; i++) {
+    const auto c = ptr[i];
+    auto next = static_cast<uint16_t>(v);
+    next *= 10;
+    next += static_cast<uint8_t>(c - '0');
+    if (next > 255) {
+      // overflow
+      return SyntaxError::kRegisterOutOfBounds;
+    }
+    v = static_cast<uint8_t>(next);
+  }
+  *out = v;
+  return SyntaxError::kNone;
+}
+
+} // namespace
+
 Parser::Parser(Interpreter* interp)
   : interpreter_(interp)
 {
@@ -78,33 +165,27 @@ Parser::parseExpr(Lexer& lexer) -> SyntaxError
 
 namespace {
 
-[[nodiscard]] auto
-matchIdentifier(const char* aPtr, const uint16_t aLen, const char* bPtr, const uint16_t bLen) -> bool
+template<typename ExprT>
+auto
+parseActivation(const Lexer& lexer, const Token& regToken, Interpreter& interp) -> SyntaxError
 {
-  return (aLen == bLen) && (memcmp(aPtr, bPtr, aLen) == 0);
+  if (regToken.kind != TokenKind::kRegister) {
+    return SyntaxError::kInvalidOperand;
+  }
+
+  ExprT expr;
+
+  const auto err = parseRegister(lexer, regToken, &expr.inRegister);
+  if (err != SyntaxError::kNone) {
+    return err;
+  }
+
+  expr.accept(interp);
+
+  return SyntaxError::kNone;
 }
 
 } // namespace
-
-auto
-Parser::parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier
-{
-  const char* idPtr = lexer.toPointer(identifier.offset);
-
-#define MATCH_IDENTIFIER(enumValue, text)                                                                              \
-  do {                                                                                                                 \
-    if (matchIdentifier(idPtr, identifier.length, text, sizeof(text) - 1)) {                                           \
-      return KnownIdentifier::enumValue;                                                                               \
-    }                                                                                                                  \
-  } while (0)
-
-  MATCH_IDENTIFIER(kLinear, "Linear");
-  MATCH_IDENTIFIER(kReLU, "ReLU");
-
-#undef MATCH_IDENTIFIER
-
-  return KnownIdentifier::kUnknown;
-}
 
 auto
 Parser::parseFunctionExpr(Lexer& lexer, const Token& funcId) -> SyntaxError
@@ -116,29 +197,11 @@ Parser::parseFunctionExpr(Lexer& lexer, const Token& funcId) -> SyntaxError
     case KnownIdentifier::kLinear:
       return parseLinearExpr(lexer);
     case KnownIdentifier::kReLU:
-      return parseReLUExpr(lexer);
+      return parseActivation<ReLUExpr>(lexer, nextToken(lexer), *interpreter_);
+    case KnownIdentifier::kSigmoid:
+      return parseActivation<SigmoidExpr>(lexer, nextToken(lexer), *interpreter_);
   }
   return SyntaxError::kUnknownFunction;
-}
-
-auto
-Parser::parseReLUExpr(Lexer& lexer) -> SyntaxError
-{
-  const auto regToken = nextToken(lexer);
-  if (regToken.kind != TokenKind::kRegister) {
-    return SyntaxError::kInvalidOperand;
-  }
-
-  ReLUExpr expr;
-
-  const auto err = parseRegister(lexer, regToken, &expr.inRegister);
-  if (err != SyntaxError::kNone) {
-    return err;
-  }
-
-  interpret(expr);
-
-  return SyntaxError::kNone;
 }
 
 auto
@@ -178,64 +241,6 @@ Parser::parseLinearExpr(Lexer& lexer) -> SyntaxError
 
   interpret(expr);
 
-  return SyntaxError::kNone;
-}
-
-#undef CHECK_ID
-
-auto
-Parser::nextToken(Lexer& lexer) -> Token
-{
-  Token token{};
-  while (lexer.remaining() > 0) {
-    token = lexer.lex();
-    if (token.kind != TokenKind::kIgnore) {
-      break;
-    }
-  }
-  return token;
-}
-
-auto
-Parser::parseNumber(const Lexer& lexer, const Token& token, uint16_t* out) -> SyntaxError
-{
-  const auto* ptr = lexer.toPointer(token.offset);
-  const auto len = token.length;
-  uint16_t v{};
-  for (uint8_t i = 0; i < len; i++) {
-    const auto c = ptr[i];
-    auto next = v;
-    next *= 10;
-    next += static_cast<uint8_t>(c - '0');
-    if (next < v) {
-      // overflow
-      return SyntaxError::kNumberOutOfBounds;
-    }
-    v = next;
-  }
-  *out = v;
-  return SyntaxError::kNone;
-}
-
-auto
-Parser::parseRegister(const Lexer& lexer, const Token& regToken, uint8_t* out) -> SyntaxError
-{
-  // +1 since the first character is '%'
-  const auto* ptr = lexer.toPointer(regToken.offset) + 1;
-  const auto len = regToken.length - 1;
-  uint8_t v{};
-  for (uint8_t i = 0; i < len; i++) {
-    const auto c = ptr[i];
-    auto next = v;
-    next *= 10;
-    next += static_cast<uint8_t>(c - '0');
-    if (next < v) {
-      // overflow
-      return SyntaxError::kRegisterOutOfBounds;
-    }
-    v = next;
-  }
-  *out = v;
   return SyntaxError::kNone;
 }
 

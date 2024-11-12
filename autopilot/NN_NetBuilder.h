@@ -18,6 +18,8 @@ public:
 
   void interpret(const ReLUExpr&) override;
 
+  void interpret(const SigmoidExpr&) override;
+
   [[nodiscard]] auto finish() -> bool;
 
 protected:

@@ -8,6 +8,7 @@ enum class SyntaxError : uint8_t;
 
 struct LinearExpr;
 struct ReLUExpr;
+struct SigmoidExpr;
 
 class Interpreter
 {
@@ -19,6 +20,8 @@ public:
   virtual void interpret(const LinearExpr&) = 0;
 
   virtual void interpret(const ReLUExpr&) = 0;
+
+  virtual void interpret(const SigmoidExpr&) = 0;
 };
 
 struct Expr
@@ -36,14 +39,24 @@ struct LinearExpr final : public Expr
 
   uint8_t inRegister{};
 
-  void accept(Interpreter& interp) const;
+  void accept(Interpreter& interp) const override;
 };
 
-struct ReLUExpr final : public Expr
+struct ActivationExpr : public Expr
 {
   uint8_t inRegister{};
 
-  void accept(Interpreter& interp) const;
+  ~ActivationExpr() override = default;
+};
+
+struct ReLUExpr final : public ActivationExpr
+{
+  void accept(Interpreter& interp) const override;
+};
+
+struct SigmoidExpr final : public ActivationExpr
+{
+  void accept(Interpreter& interp) const override;
 };
 
 [[nodiscard]] auto

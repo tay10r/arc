@@ -77,6 +77,12 @@ Env::Env()
 }
 
 auto
+Env::getElapsedTime() const -> float
+{
+  return elapsedTime_;
+}
+
+auto
 Env::getTimeDelta() const -> float
 {
   return timeDelta_;
@@ -92,6 +98,8 @@ void
 Env::step()
 {
   world_->update(timeDelta_);
+
+  elapsedTime_ += timeDelta_;
 }
 
 void
@@ -113,7 +121,9 @@ Env::createFloor(const float size, const float verticalOffset) -> rp3::RigidBody
 {
   auto* body = world_->createRigidBody(rp3::Transform());
   auto* floor = common_.createBoxShape(rp3::Vector3(size, size, 1));
-  body->addCollider(floor, rp3::Transform(rp3::Vector3(0, 0, 1 + verticalOffset), rp3::Quaternion::identity()));
+  auto* collider =
+    body->addCollider(floor, rp3::Transform(rp3::Vector3(0, 0, 1 + verticalOffset), rp3::Quaternion::identity()));
+  collider->getMaterial().setBounciness(0.0);
   body->setType(rp3::BodyType::STATIC);
   return body;
 }

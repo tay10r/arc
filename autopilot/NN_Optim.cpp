@@ -54,6 +54,12 @@ LSOptimizer::releaseMemory()
 }
 
 auto
+LSOptimizer::getBestLoss() const -> float
+{
+  return bestLoss_;
+}
+
+auto
 LSOptimizer::step(void* rngData, RngIntFunc rngInt, RngFloatFunc rngFloat, void* lossData, LossFunc loss) -> float
 {
   if (batchIndex_ == 0) {
@@ -61,9 +67,7 @@ LSOptimizer::step(void* rngData, RngIntFunc rngInt, RngFloatFunc rngFloat, void*
   }
 
   const auto paramOffset = batchIndex_ * batchSize_;
-
   const auto paramEnd = paramOffset + batchSize_;
-
   const auto safeParamEnd = (paramEnd > net_->numParameters) ? net_->numParameters : paramEnd;
 
   for (auto i = paramOffset; i < safeParamEnd; i++) {

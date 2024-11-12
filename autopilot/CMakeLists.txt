@@ -19,6 +19,8 @@ add_library(arc_autopilot
   AP_Heartbeat.cpp
   AP_Time.h
   AP_Time.cpp
+  AP_Hil.h
+  AP_Hil.cpp
   NN_Module.h
   NN_Module.cpp
   NN_Lexer.h
@@ -36,7 +38,11 @@ add_library(arc_autopilot
   NN_Loss.h
   NN_Loss.cpp
   NN_Optim.h
-  NN_Optim.cpp)
+  NN_Optim.cpp
+  RL_Policy.h
+  RL_Policy.cpp
+  RL_DQN.h
+  RL_DQN.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT ARC_NO_WARNINGS)
   target_compile_options(arc_autopilot

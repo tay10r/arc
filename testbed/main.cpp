@@ -6,6 +6,7 @@
 
 #include <AP_Program.h>
 
+#include "NetTest.h"
 #include "Renderer.h"
 #include "Simulation.h"
 
@@ -36,6 +37,11 @@ public:
 
   void loop(uikit::platform& plt) override
   {
+    if (ImGui::Begin("Net Test")) {
+      netTest_->render();
+    }
+    ImGui::End();
+
     auto& io = ImGui::GetIO();
     auto aspect = io.DisplaySize.x / io.DisplaySize.y;
 
@@ -48,10 +54,7 @@ public:
         agent->setAction(i, static_cast<bool>(manualControlState_.discreteValues[i]));
       }
     }
-    env_->step();
-    for (auto& sim : simulations_) {
-      sim->loop(env_->getTimeDelta());
-    }
+    stepSim();
 
     renderer_->render(env_->render(), aspect);
 
@@ -62,6 +65,22 @@ public:
   }
 
 protected:
+  void stepSim()
+  {
+    env_->step();
+
+    for (auto& sim : simulations_) {
+      sim->loop(env_->getTimeDelta());
+    }
+
+    if (env_->getElapsedTime() >= maxSimDuration_) {
+
+      createEnv("LunarLander");
+
+      env_->setRenderingEnabled(true);
+    }
+  }
+
   void renderManualControlUi()
   {
     if (ImGui::SliderInt("Agent", &selectedAgent_, 0, agents_.size() - 1)) {
@@ -98,7 +117,9 @@ protected:
   {
     simulations_.clear();
 
-    env_ = envRegistry_.createEnv(name);
+    agents_.clear();
+
+    env_ = envRegistry_.createEnv(name, seed_);
 
     const auto numAgents = env_->getNumAgents();
 
@@ -108,9 +129,12 @@ protected:
       simulations_.emplace_back(std::move(sim));
       agents_.emplace_back(std::move(agent));
     }
+
     for (auto& sim : simulations_) {
       sim->setup();
     }
+
+    seed_++;
   }
 
 private:
@@ -127,6 +151,12 @@ private:
   ManualControlState manualControlState_;
 
   int selectedAgent_{};
+
+  std::unique_ptr<NetTest> netTest_{ NetTest::create() };
+
+  int seed_{};
+
+  float maxSimDuration_{ 15.0F };
 };
 
 } // namespace

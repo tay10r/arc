@@ -69,7 +69,7 @@ TEST(NetRunner, LearnXor)
   std::mt19937 rng{ seed };
 
   auto rngFunc = [](void* rngPtr) -> float {
-    std::uniform_real_distribution<float> dist(0, 1);
+    std::uniform_real_distribution<float> dist(-1, 1);
     const auto v = dist(*static_cast<std::mt19937*>(rngPtr));
     return v;
   };

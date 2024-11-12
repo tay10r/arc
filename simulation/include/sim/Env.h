@@ -61,6 +61,8 @@ public:
 
   [[nodiscard]] auto getTimeDelta() const -> float;
 
+  [[nodiscard]] auto getElapsedTime() const -> float;
+
   void setTimeDelta(float delta_t);
 
   auto createAgent(const rp3::Transform& transform) -> std::shared_ptr<Agent>;
@@ -83,6 +85,8 @@ private:
   rp3::PhysicsWorld* world_{};
 
   float timeDelta_{ 0.01 };
+
+  float elapsedTime_{ 0 };
 
   std::vector<std::shared_ptr<Agent>> agents_;
 };

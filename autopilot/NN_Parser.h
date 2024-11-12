@@ -23,7 +23,8 @@ enum class KnownIdentifier : uint8_t
 {
   kUnknown,
   kLinear,
-  kReLU
+  kReLU,
+  kSigmoid
 };
 
 class Parser final
@@ -42,17 +43,7 @@ protected:
 
   [[nodiscard]] auto parseFunctionExpr(Lexer& lexer, const Token& funcId) -> SyntaxError;
 
-  [[nodiscard]] auto parseReLUExpr(Lexer& lexer) -> SyntaxError;
-
   [[nodiscard]] auto parseLinearExpr(Lexer& lexer) -> SyntaxError;
-
-  [[nodiscard]] static auto parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier;
-
-  [[nodiscard]] static auto parseNumber(const Lexer& lexer, const Token& token, uint16_t* out) -> SyntaxError;
-
-  [[nodiscard]] static auto parseRegister(const Lexer& lexer, const Token& regToken, uint8_t* out) -> SyntaxError;
-
-  [[nodiscard]] static auto nextToken(Lexer& lexer) -> Token;
 
   void interpret(const Expr&);
 

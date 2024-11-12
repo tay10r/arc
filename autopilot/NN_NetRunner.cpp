@@ -2,6 +2,8 @@
 
 #include "NN_Net.h"
 
+#include <math.h>
+
 namespace NN {
 
 NetRunner::NetRunner(const Net* net)
@@ -53,6 +55,8 @@ NetRunner::interpret(const LinearExpr& expr)
     net_->regs[currentReg_][i] = out + bias[i];
   }
 
+  regSizes_[currentReg_] = expr.outFeatures;
+
   currentParameters_ += expr.inFeatures * expr.outFeatures + expr.outFeatures;
 }
 
@@ -69,6 +73,25 @@ NetRunner::interpret(const ReLUExpr& expr)
     const auto in = input[i];
     output[i] = (in >= 0.0F) ? in : 0.0F;
   }
+
+  regSizes_[currentReg_] = regSizes_[expr.inRegister];
+}
+
+void
+NetRunner::interpret(const SigmoidExpr& expr)
+{
+  const auto numFeatures = regSizes_[expr.inRegister];
+
+  const auto* input = net_->regs[expr.inRegister];
+
+  auto* output = net_->regs[currentReg_];
+
+  for (uint32_t i = 0; i < numFeatures; i++) {
+    const auto ex = expf(input[i]);
+    output[i] = ex / (1.0F + ex);
+  }
+
+  regSizes_[currentReg_] = regSizes_[expr.inRegister];
 }
 
 } // namespace NN

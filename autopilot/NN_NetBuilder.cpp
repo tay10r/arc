@@ -7,6 +7,7 @@ namespace NN {
 NetBuilder::NetBuilder(Net* net, const uint16_t inputSize)
   : net_(net)
 {
+  net_->numParameters = 0;
   net_->regSizes[0] = inputSize;
   for (uint8_t i = 1; i < NN_MAX_REGS; i++) {
     net_->regSizes[i] = 0;
@@ -34,6 +35,12 @@ NetBuilder::interpret(const LinearExpr& expr)
 
 void
 NetBuilder::interpret(const ReLUExpr& expr)
+{
+  expandCurrentRegSize(net_->regSizes[expr.inRegister]);
+}
+
+void
+NetBuilder::interpret(const SigmoidExpr& expr)
 {
   expandCurrentRegSize(net_->regSizes[expr.inRegister]);
 }

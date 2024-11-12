@@ -17,6 +17,12 @@ ReLUExpr::accept(Interpreter& interp) const
   interp.interpret(*this);
 }
 
+void
+SigmoidExpr::accept(Interpreter& interp) const
+{
+  interp.interpret(*this);
+}
+
 auto
 exec(const char* source, const uint16_t length, Interpreter& interp) -> SyntaxError
 {

@@ -20,6 +20,8 @@ public:
 
   void interpret(const ReLUExpr&) override;
 
+  void interpret(const SigmoidExpr&) override;
+
 private:
   const Net* net_{};
 

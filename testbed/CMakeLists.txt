@@ -39,6 +39,8 @@ endif()
 
 add_executable(main WIN32
   main.cpp
+  NetTest.h
+  NetTest.cpp
   Simulation.h
   Simulation.cpp
   Renderer.h

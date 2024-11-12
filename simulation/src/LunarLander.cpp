@@ -52,7 +52,8 @@ createLunarLander(int seed) -> std::unique_ptr<Env>
   env->createFloor(/*size=*/2.0F);
   auto ship = env->createAgent(initTransform);
   auto shape = env->getCommon()->createBoxShape(rp3::Vector3(1, 1, 1));
-  ship->getBody()->addCollider(shape, initTransform);
+  auto* collider = ship->getBody()->addCollider(shape, initTransform);
+  collider->getMaterial().setBounciness(0.2);
   const auto max_force{ 20.0F };
   ship->registerAction(std::make_unique<ThrusterAction>(rp3::Vector3(0, 1, 0), rp3::Vector3(0, 0, -1), max_force),
                        "r_thrust");
