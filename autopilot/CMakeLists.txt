@@ -39,6 +39,8 @@ add_library(arc_autopilot
   NN_Loss.cpp
   NN_Optim.h
   NN_Optim.cpp
+  NN_RegCounter.h
+  NN_RegCounter.cpp
   RL_Policy.h
   RL_Policy.cpp
   RL_DDPG.h

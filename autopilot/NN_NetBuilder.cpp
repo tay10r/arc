@@ -44,6 +44,12 @@ NetBuilder::interpret(const LinearExpr& expr)
 }
 
 void
+NetBuilder::interpret(const MatMulExpr& expr)
+{
+  (void)expr;
+}
+
+void
 NetBuilder::interpret(const ConcatExpr& expr)
 {
   expandCurrentRegSize(expr.leftOpReg + expr.rightOpReg);

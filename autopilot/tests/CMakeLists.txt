@@ -5,7 +5,8 @@ find_package(GTest REQUIRED)
 add_executable(arc_autopilot_tests
   lexer.cpp
   parser.cpp
-  interpreter.cpp)
+  interpreter.cpp
+  reg_counter.cpp)
 
 target_link_libraries(arc_autopilot_tests
   PUBLIC

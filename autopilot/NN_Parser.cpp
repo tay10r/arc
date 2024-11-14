@@ -19,6 +19,7 @@ enum class KnownIdentifier : uint8_t
 {
   kUnknown,
   kLinear,
+  kMatMul,
   kConcat,
   kCompAdd,
   kCompMul,
@@ -40,6 +41,7 @@ parseIdentifier(const Lexer& lexer, const Token& identifier) -> KnownIdentifier
   } while (0)
 
   MATCH_IDENTIFIER(kLinear, "Linear");
+  MATCH_IDENTIFIER(kMatMul, "MatMul");
   MATCH_IDENTIFIER(kConcat, "Concat");
   MATCH_IDENTIFIER(kCompAdd, "CompAdd");
   MATCH_IDENTIFIER(kCompMul, "CompMul");
@@ -108,6 +110,13 @@ parseRegister(const Lexer& lexer, const Token& regToken, uint8_t* out) -> Syntax
   return SyntaxError::kNone;
 }
 
+[[nodiscard]] auto
+matchEndOfStmt(Lexer& lexer) -> bool
+{
+  const auto tok = nextToken(lexer);
+  return (tok == TokenKind::kNone) || (tok == TokenKind::kNewline);
+}
+
 } // namespace
 
 Parser::Parser(Interpreter* interp)
@@ -142,6 +151,9 @@ Parser::iterateParse(Lexer& lexer) -> SyntaxError
       interpreter_->beginAssignment(dstReg);
       return parseAssignment(lexer);
     }
+    case TokenKind::kNewline:
+      // This happens when there's an empty line, which is okay.
+      break;
     case TokenKind::kIgnore:
       // This happens when there is whitespace after the last item in the file.
       // It can be safely ignored.
@@ -161,7 +173,16 @@ Parser::parseAssignment(Lexer& lexer) -> SyntaxError
     return SyntaxError::kUnexpectedToken;
   }
 
-  return parseExpr(lexer);
+  const auto err = parseExpr(lexer);
+  if (err != SyntaxError::kNone) {
+    return err;
+  }
+
+  if (!matchEndOfStmt(lexer)) {
+    return SyntaxError::kUnexpectedToken;
+  }
+
+  return SyntaxError::kNone;
 }
 
 auto
@@ -241,6 +262,8 @@ Parser::parseFunctionExpr(Lexer& lexer, const Token& funcId) -> SyntaxError
       break;
     case KnownIdentifier::kLinear:
       return parseLinearExpr(lexer);
+    case KnownIdentifier::kMatMul:
+      return parseBinaryExpr<MatMulExpr>(lexer, *interpreter_);
     case KnownIdentifier::kConcat:
       return parseBinaryExpr<ConcatExpr>(lexer, *interpreter_);
     case KnownIdentifier::kCompAdd:
