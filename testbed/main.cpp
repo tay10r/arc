@@ -28,7 +28,7 @@ public:
   {
     renderer_ = Renderer::create();
 
-    createEnv("LunarLander");
+    createEnv("BoatDriver");
 
     env_->setRenderingEnabled(true);
   }
@@ -75,7 +75,7 @@ protected:
 
     if (env_->getElapsedTime() >= maxSimDuration_) {
 
-      createEnv("LunarLander");
+      createEnv("BoatDriver");
 
       env_->setRenderingEnabled(true);
     }

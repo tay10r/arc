@@ -7,9 +7,11 @@ add_library(arc_fake_arduino
   include/Print.h
   include/Stream.h
   include/HardwareSerial.h
+  include/Wire.h
   src/Print.cpp
   src/Stream.cpp
-  src/HardwareSerial.cpp)
+  src/HardwareSerial.cpp
+  src/Wire.cpp)
 
 target_include_directories(arc_fake_arduino
   PUBLIC

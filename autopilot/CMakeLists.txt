@@ -21,6 +21,10 @@ add_library(arc_autopilot
   AP_Time.cpp
   AP_Hil.h
   AP_Hil.cpp
+  AP_Magnetometer.h
+  AP_Magnetometer.cpp
+  AP_MMC5983MA.h
+  AP_MMC5983MA.cpp
   NN_Module.h
   NN_Module.cpp
   NN_Lexer.h

@@ -109,7 +109,7 @@ uniform highp vec3 lightDirection;
 void
 main()
 {
-  float lighting = (dot(lightDirection, interpolatedNormal) + 1.0) * 0.5;
+  highp float lighting = (dot(lightDirection, interpolatedNormal) + 1.0) * 0.5;
 
   gl_FragColor = vec4(interpolatedColor * lighting, 1.0);
 }
