@@ -52,10 +52,23 @@ private:
   std::vector<std::string> discreteActionNames_;
 };
 
+class EnvEffect
+{
+public:
+  virtual ~EnvEffect() = default;
+
+  virtual void apply(std::vector<std::shared_ptr<Agent>>& agents) = 0;
+};
+
 class Env final
 {
 public:
-  Env();
+  /**
+   * @brief Initializes the environment.
+   *
+   * @param gravity The value for gravity, in terms of meters per second squared.
+   * */
+  Env(float gravity = 9.8);
 
   void step();
 
@@ -64,6 +77,15 @@ public:
   [[nodiscard]] auto getElapsedTime() const -> float;
 
   void setTimeDelta(float delta_t);
+
+#if 0 // TODO
+  /**
+   * @brief Simulates a body of water at a specific velocity and vertical offset.
+   * */
+  void addOceanEffect(float verticalOffset, float speedX, float speedY);
+
+  void addEnvEffect(std::unique_ptr<EnvEffect> effect);
+#endif
 
   auto createAgent(const rp3::Transform& transform) -> std::shared_ptr<Agent>;
 
@@ -89,6 +111,8 @@ private:
   float elapsedTime_{ 0 };
 
   std::vector<std::shared_ptr<Agent>> agents_;
+
+  std::vector<std::unique_ptr<EnvEffect>> effects_;
 };
 
 } // namespace sim

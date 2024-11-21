@@ -16,6 +16,8 @@ public:
 
   void interpret(const LinearExpr&) override;
 
+  void interpret(const MatMulExpr&) override;
+
   void interpret(const ConcatExpr&) override;
 
   void interpret(const CompAddExpr&) override;

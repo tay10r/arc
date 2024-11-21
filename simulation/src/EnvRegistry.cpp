@@ -1,5 +1,6 @@
 #include <sim/EnvRegistry.h>
 
+#include "BoatDriver.h"
 #include "LunarLander.h"
 
 namespace sim {
@@ -7,11 +8,11 @@ namespace sim {
 EnvRegistry::EnvRegistry()
 {
   registerEnv("LunarLander", createLunarLander);
+  registerEnv("BoatDriver", createBoatDriver);
 }
 
 auto
-EnvRegistry::createEnv(const std::string& name, const int seed)
-  -> std::unique_ptr<Env>
+EnvRegistry::createEnv(const std::string& name, const int seed) -> std::unique_ptr<Env>
 {
   return factories_.at(name)(seed);
 }

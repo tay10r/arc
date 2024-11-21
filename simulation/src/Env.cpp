@@ -2,18 +2,6 @@
 
 namespace sim {
 
-namespace {
-
-auto
-getDefaultSettings() -> rp3::PhysicsWorld::WorldSettings
-{
-  rp3::PhysicsWorld::WorldSettings settings;
-  settings.gravity = rp3::Vector3(0, 0, 9.8);
-  return settings;
-}
-
-} // namespace
-
 Agent::Agent(rp3::RigidBody* body)
   : body_(body)
 {
@@ -51,15 +39,13 @@ Agent::registerAction(std::unique_ptr<Action<bool>> action, std::string name)
   discreteActionNames_.emplace_back(std::move(name));
 }
 
-[[nodiscard]]
-auto
+[[nodiscard]] auto
 Agent::getActionNames() const -> const std::vector<std::string>&
 {
   return actionNames_;
 }
 
-[[nodiscard]]
-auto
+[[nodiscard]] auto
 Agent::getDiscreteActionNames() const -> const std::vector<std::string>&
 {
   return discreteActionNames_;
@@ -71,8 +57,20 @@ Agent::getPosition() const -> rp3::Vector3
   return body_->getTransform().getPosition();
 }
 
-Env::Env()
-  : world_(common_.createPhysicsWorld(getDefaultSettings()))
+namespace {
+
+auto
+getDefaultSettings(const float gravity) -> rp3::PhysicsWorld::WorldSettings
+{
+  rp3::PhysicsWorld::WorldSettings settings;
+  settings.gravity = rp3::Vector3(0, 0, gravity);
+  return settings;
+}
+
+} // namespace
+
+Env::Env(float gravity)
+  : world_(common_.createPhysicsWorld(getDefaultSettings(gravity)))
 {
 }
 

@@ -61,6 +61,12 @@ NetRunner::interpret(const LinearExpr& expr)
 }
 
 void
+NetRunner::interpret(const MatMulExpr& expr)
+{
+  (void)expr;
+}
+
+void
 NetRunner::interpret(const ConcatExpr& expr)
 {
   const auto* leftOp = net_->regs[expr.leftOpReg];

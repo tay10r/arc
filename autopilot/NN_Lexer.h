@@ -11,6 +11,7 @@ enum class TokenKind : uint8_t
   kIdentifier,
   kNumber,
   kSymbol,
+  kNewline,
   kIgnore
 };
 
@@ -40,6 +41,8 @@ public:
 
 protected:
   [[nodiscard]] auto produceToken(TokenKind kind, uint8_t length) -> Token;
+
+  [[nodiscard]] auto peek(uint16_t relativeOffset) const -> char;
 
 private:
   const char* source_{};

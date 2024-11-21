@@ -15,6 +15,8 @@ public:
 
   void interpret(const NN::LinearExpr&) override {}
 
+  void interpret(const NN::MatMulExpr&) override {}
+
   void interpret(const NN::ConcatExpr&) override {}
 
   void interpret(const NN::CompAddExpr&) override {}
@@ -80,6 +82,11 @@ TEST(Parser, NumberOutOfBounds)
   EXPECT_EQ(runErrorTest("%1 = Linear 1000000 256 %0"), NN::SyntaxError::kNumberOutOfBounds);
 }
 
+TEST(Parser, EmptyLine)
+{
+  EXPECT_EQ(runErrorTest("\n"), NN::SyntaxError::kNone);
+}
+
 namespace {
 
 class Printer final : public NN::Interpreter
@@ -95,19 +102,24 @@ public:
             << static_cast<int>(expr.inRegister) << '\n';
   }
 
+  void interpret(const NN::MatMulExpr& expr) override
+  {
+    stream_ << "MatMul %" << static_cast<int>(expr.leftOpReg) << " %" << static_cast<int>(expr.rightOpReg) << '\n';
+  }
+
   void interpret(const NN::ConcatExpr& expr) override
   {
-    //
+    stream_ << "Concat %" << static_cast<int>(expr.leftOpReg) << " %" << static_cast<int>(expr.rightOpReg) << '\n';
   }
 
   void interpret(const NN::CompAddExpr& expr) override
   {
-    //
+    stream_ << "CompAdd %" << static_cast<int>(expr.leftOpReg) << " %" << static_cast<int>(expr.rightOpReg) << '\n';
   }
 
   void interpret(const NN::CompMulExpr& expr) override
   {
-    //
+    stream_ << "CompMul %" << static_cast<int>(expr.leftOpReg) << " %" << static_cast<int>(expr.rightOpReg) << '\n';
   }
 
   void interpret(const NN::ReLUExpr& expr) override
@@ -125,18 +137,27 @@ private:
 
 } // namespace
 
-TEST(Parser, Full)
+TEST(Parser, Forward)
 {
-  const char src[] = R"(
-  %1 = Linear 4 16 %0
-  %2 = ReLU %1
-  )";
-  NN::Lexer lexer(src, sizeof(src) - 1);
+  const char src[] = "%3 = MatMul %0 %1\n"
+                     "%4 = CompAdd %2 %3\n"
+                     "%5 = ReLU %4\n";
   Printer printer;
-  NN::Parser parser(&printer);
-  const auto err = parser.parse(lexer);
+  const auto err = NN::exec(src, sizeof(src) - 1, printer);
+  EXPECT_EQ(err, NN::SyntaxError::kNone);
+  EXPECT_EQ(printer.getString(), std::string(src));
+}
+
+TEST(Parser, Reverse)
+{
+  const char src[] = "%3 = MatMul %0 %1\n"
+                     "%4 = CompAdd %2 %3\n"
+                     "%5 = ReLU %4\n";
+  Printer printer;
+  const auto err = NN::reverseExec(src, sizeof(src) - 1, printer);
   EXPECT_EQ(err, NN::SyntaxError::kNone);
   EXPECT_EQ(printer.getString(),
-            "%1 = Linear 4 16 %0\n"
-            "%2 = ReLU %1\n");
+            "%5 = ReLU %4\n"
+            "%4 = CompAdd %2 %3\n"
+            "%3 = MatMul %0 %1\n");
 }

@@ -16,7 +16,10 @@ public:
 
   void beginAssignment(const uint8_t dstReg) override;
 
+  // deprecated
   void interpret(const LinearExpr&) override;
+
+  void interpret(const MatMulExpr&) override;
 
   void interpret(const ConcatExpr&) override;
 

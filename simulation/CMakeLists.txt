@@ -14,10 +14,14 @@ FetchContent_MakeAvailable(rp3)
 add_library(arc_sim
   include/sim/Env.h
   include/sim/EnvRegistry.h
+  src/ThrusterAction.h
+  src/ThrusterAction.cpp
   src/Env.cpp
   src/EnvRegistry.cpp
   src/LunarLander.h
-  src/LunarLander.cpp)
+  src/LunarLander.cpp
+  src/BoatDriver.h
+  src/BoatDriver.cpp)
 
 target_include_directories(arc_sim
   PUBLIC

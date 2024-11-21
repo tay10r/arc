@@ -39,7 +39,15 @@ TEST(Lexer, CR)
 TEST(Lexer, LF)
 {
   DECL_LEXER(lexer, "\n");
-  EXPECT_EQ(lexer.lex().kind, NN::TokenKind::kIgnore);
+  EXPECT_EQ(lexer.lex().kind, NN::TokenKind::kNewline);
+}
+
+TEST(Lexer, CRLF)
+{
+  DECL_LEXER(lexer, "\r\n ");
+  const auto token = lexer.lex();
+  EXPECT_EQ(token, NN::TokenKind::kNewline);
+  EXPECT_EQ(token.length, 2);
 }
 
 TEST(Lexer, Identifier)

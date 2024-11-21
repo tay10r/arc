@@ -43,15 +43,27 @@ Lexer::lex() -> Token
     return Token{};
   }
 
-  const auto c = source_[offset_];
-  if ((c == ' ') || (c == '\t') || (c == '\n') || (c == '\r')) {
+  const auto c = peek(0);
+
+  if (c == '\n') {
+    return produceToken(TokenKind::kNewline, 1);
+  }
+
+  if (c == '\r') {
+    if (peek(1) == '\n') {
+      return produceToken(TokenKind::kNewline, 2);
+    }
+    return produceToken(TokenKind::kIgnore, 1);
+  }
+
+  if ((c == ' ') || (c == '\t')) {
     return produceToken(TokenKind::kIgnore, 1);
   }
 
   if (c == '%') {
     uint16_t len = 1;
     while ((offset_ + len) < length_) {
-      const auto c = source_[offset_ + len];
+      const auto c = peek(len);
       if (!isDigit(c)) {
         break;
       }
@@ -63,7 +75,7 @@ Lexer::lex() -> Token
   if (isDigit(c)) {
     uint16_t len = 1;
     while ((offset_ + len) < length_) {
-      const auto c = source_[offset_ + len];
+      const auto c = peek(len);
       if (!isDigit(c)) {
         break;
       }
@@ -75,7 +87,7 @@ Lexer::lex() -> Token
   if (isAlpha(c)) {
     uint16_t len = 1;
     while ((offset_ + len) < length_) {
-      const auto c = source_[offset_ + len];
+      const auto c = peek(len);
       if (!(isDigit(c) || isAlpha(c) || (c == '_'))) {
         break;
       }
@@ -105,6 +117,17 @@ Lexer::produceToken(TokenKind kind, const uint8_t length) -> Token
   Token token{ kind, length, offset_ };
   offset_ += length;
   return token;
+}
+
+auto
+Lexer::peek(uint16_t relativeOffset) const -> char
+{
+  const auto absOffset = offset_ + relativeOffset;
+  if (absOffset < length_) {
+    return source_[absOffset];
+  } else {
+    return 0;
+  }
 }
 
 } // namespace NN

@@ -7,6 +7,7 @@ namespace NN {
 enum class SyntaxError : uint8_t;
 
 struct LinearExpr;
+struct MatMulExpr;
 struct ConcatExpr;
 struct CompAddExpr;
 struct CompMulExpr;
@@ -21,7 +22,10 @@ public:
 
   virtual void beginAssignment(uint8_t dstReg) = 0;
 
+  // deprecated
   virtual void interpret(const LinearExpr&) = 0;
+
+  virtual void interpret(const MatMulExpr&) = 0;
 
   virtual void interpret(const ConcatExpr&) = 0;
 
@@ -59,6 +63,11 @@ struct BinaryExpr : public Expr
   uint8_t leftOpReg{};
 
   uint8_t rightOpReg{};
+};
+
+struct MatMulExpr final : public BinaryExpr
+{
+  void accept(Interpreter& interp) const override;
 };
 
 struct ConcatExpr final : public BinaryExpr
@@ -100,5 +109,13 @@ struct TanhExpr final : public UnaryExpr
 
 [[nodiscard]] auto
 exec(const char* source, const uint16_t length, Interpreter& interp) -> SyntaxError;
+
+/**
+ * @brief Executes the IR in reverse.
+ *
+ * @note This is primarily useful for backpropagation and not meant to be used for inference.
+ * */
+[[nodiscard]] auto
+reverseExec(const char* source, const uint16_t length, Interpreter& interp) -> SyntaxError;
 
 } // namespace NN
