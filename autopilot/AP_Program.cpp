@@ -15,6 +15,8 @@ Program::loop()
 {
   const auto timeDelta = stopwatch_.getElapsed(*clock_);
 
+  stopwatch_.begin(*clock_);
+
   mavlinkBus_.processOutput(*mavlinkStream_);
 
   while (true) {
@@ -28,8 +30,6 @@ Program::loop()
   }
 
   heartbeat_.loop(mavlinkBus_, timeDelta);
-
-  stopwatch_.begin(*clock_);
 }
 
 void

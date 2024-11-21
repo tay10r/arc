@@ -51,9 +51,13 @@ MAVLinkBus::processOutput(Stream& stream)
   }
 
   if (activeBuffer) {
-    if ((activeBuffer->writeOffset < activeBuffer->size) && (stream.availableForWrite() > 0)) {
-      auto c = activeBuffer->data[activeBuffer->writeOffset];
-      activeBuffer->writeOffset += stream.write(c);
+    while ((activeBuffer->writeOffset < activeBuffer->size) && (stream.availableForWrite() > 0)) {
+      const auto c = activeBuffer->data[activeBuffer->writeOffset];
+      const auto writeSize = stream.write(c);
+      if (!writeSize) {
+        break;
+      }
+      activeBuffer->writeOffset += writeSize;
     }
     if (activeBuffer->writeOffset >= activeBuffer->size) {
       activeBuffer->writeOffset = 0;

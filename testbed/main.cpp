@@ -6,6 +6,7 @@
 
 #include <AP_Program.h>
 
+#include "GcsTest.h"
 #include "NetTest.h"
 #include "Renderer.h"
 #include "Simulation.h"
@@ -33,10 +34,20 @@ public:
     env_->setRenderingEnabled(true);
   }
 
-  void teardown(uikit::platform&) override { renderer_.reset(); }
+  void teardown(uikit::platform&) override
+  {
+    renderer_.reset();
+
+    gcsTest_->close();
+  }
 
   void loop(uikit::platform& plt) override
   {
+    if (ImGui::Begin("GCS Test")) {
+      gcsTest_->render();
+    }
+    ImGui::End();
+
     if (ImGui::Begin("Net Test")) {
       netTest_->render();
     }
@@ -153,6 +164,8 @@ private:
   int selectedAgent_{};
 
   std::unique_ptr<NetTest> netTest_{ NetTest::create() };
+
+  std::unique_ptr<GcsTest> gcsTest_{ GcsTest::create() };
 
   int seed_{};
 

@@ -30,6 +30,9 @@ FetchContent_MakeAvailable(uikit)
 FetchContent_Declare(glm URL "https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip")
 FetchContent_MakeAvailable(glm)
 
+FetchContent_Declare(libuv URL "https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.zip")
+FetchContent_MakeAvailable(libuv)
+
 set(extra_sources)
 if(WIN32)
   list(APPEND win32/Serial.cpp)
@@ -41,6 +44,8 @@ add_executable(main WIN32
   main.cpp
   NetTest.h
   NetTest.cpp
+  GcsTest.h
+  GcsTest.cpp
   Simulation.h
   Simulation.cpp
   Renderer.h
@@ -52,6 +57,7 @@ target_link_libraries(main
   PUBLIC
     uikit::main
     glm::glm
+    uv_a
     arc::sim
     arc::fake_arduino
     arc::autopilot)
