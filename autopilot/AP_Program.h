@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "AP_GPS.h"
 #include "AP_Heartbeat.h"
 #include "AP_Mavlink.h"
 #include "AP_Time.h"
@@ -20,8 +21,10 @@ public:
    * @param mavlink_stream The stream where MAVLink traffic should be routed through.
    *
    * @param clock For keeping track of time.
+   *
+   * @param gpsSensor A GPS sensor for indicating the position and velocity of the vehicle.
    */
-  void setup(Stream* mavlink_stream, Clock* clock);
+  void setup(Stream* mavlink_stream, Clock* clock, GPSSensor* gpsSensor);
 
   void loop();
 
@@ -58,6 +61,11 @@ private:
    * @brief The component for sending heartbeats out.
    */
   HeartbeatComponent heartbeat_;
+
+  /**
+   * @brief The MAVLink component for GPS.
+   * */
+  GPSComponent gpsComponent_;
 };
 
 } // namespace AP

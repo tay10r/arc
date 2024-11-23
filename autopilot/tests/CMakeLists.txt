@@ -6,7 +6,10 @@ add_executable(arc_autopilot_tests
   lexer.cpp
   parser.cpp
   interpreter.cpp
-  reg_counter.cpp)
+  reg_counter.cpp
+  gps.cpp
+  nmea.cpp
+  random.cpp)
 
 target_link_libraries(arc_autopilot_tests
   PUBLIC
@@ -19,3 +22,6 @@ set_target_properties(arc_autopilot_tests
     OUTPUT_NAME run_tests
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(arc_autopilot_tests PUBLIC -Wno-address-of-packed-member)
+endif()

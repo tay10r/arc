@@ -5,6 +5,7 @@ project(arc_autopilot
   VERSION 1.0)
 
 option(ARC_AUTOPILOT_TESTS "Whether or not to build the unit tests." OFF)
+option(ARC_AUTOPILOT_SIM "Whether or not to build the simulation programs." OFF)
 
 if(NOT TARGET arc::fake_arduino)
   add_subdirectory(../arduino arduino)
@@ -25,6 +26,16 @@ add_library(arc_autopilot
   AP_Magnetometer.cpp
   AP_MMC5983MA.h
   AP_MMC5983MA.cpp
+  AP_GPS.h
+  AP_GPS.cpp
+  AP_NMEA.h
+  AP_NMEA.cpp
+  AP_Random.h
+  AP_Random.cpp
+  AP_WGS84.h
+  AP_WGS84.cpp
+  AP_LinAlg.h
+  AP_LinAlg.cpp
   NN_Module.h
   NN_Module.cpp
   NN_Lexer.h
@@ -48,7 +59,15 @@ add_library(arc_autopilot
   RL_Policy.h
   RL_Policy.cpp
   RL_DDPG.h
-  RL_DDPG.cpp)
+  RL_DDPG.cpp
+  SIM_Vehicle.h
+  SIM_Vehicle.cpp
+  SIM_GPS.h
+  SIM_GPS.cpp
+  SIM_Clock.h
+  SIM_Clock.cpp
+  SIM_Boat.h
+  SIM_Boat.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT ARC_NO_WARNINGS)
   target_compile_options(arc_autopilot
@@ -68,4 +87,8 @@ add_library(arc::autopilot ALIAS arc_autopilot)
 
 if(ARC_AUTOPILOT_TESTS)
   add_subdirectory(tests)
+endif()
+
+if(ARC_AUTOPILOT_SIM)
+  add_subdirectory(sim)
 endif()

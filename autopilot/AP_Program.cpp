@@ -3,10 +3,16 @@
 namespace AP {
 
 void
-Program::setup(Stream* stream, Clock* clock)
+Program::setup(Stream* stream, Clock* clock, GPSSensor* gpsSensor)
 {
   mavlinkStream_ = stream;
+
   clock_ = clock;
+
+  if (gpsSensor) {
+    gpsComponent_.setSensor(gpsSensor);
+  }
+
   stopwatch_.begin(*clock_);
 }
 
@@ -30,6 +36,8 @@ Program::loop()
   }
 
   heartbeat_.loop(mavlinkBus_, timeDelta);
+
+  gpsComponent_.loop(mavlinkBus_, timeDelta);
 }
 
 void

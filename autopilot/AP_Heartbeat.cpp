@@ -24,6 +24,8 @@ HeartbeatComponent::loop(MAVLinkBus& bus, const uint32_t timeDelta)
       // If the message sending was successful, restart the timer.
       timer_.reset();
     }
+
+#if 0
     {
       mavlink_global_position_int_t payload{};
       payload.lat = static_cast<int32_t>(41.4633 * 1.0e7);
@@ -32,6 +34,7 @@ HeartbeatComponent::loop(MAVLinkBus& bus, const uint32_t timeDelta)
       mavlink_msg_global_position_int_encode(/*system_id=*/1, MAV_COMP_ID_AUTOPILOT1, &msg, &payload);
       bus.send(msg);
     }
+#endif
   }
 }
 
