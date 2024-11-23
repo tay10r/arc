@@ -20,7 +20,7 @@ target_link_libraries(arc_sim
   PUBLIC
     spdlog::spdlog
     cxxopts::cxxopts
-    libuv::uv_a
+    $<IF:$<TARGET_EXISTS:libuv::uv_a>,libuv::uv_a,libuv::uv>
     arc::autopilot
     arc::fake_arduino)
 

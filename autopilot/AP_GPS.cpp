@@ -1,5 +1,6 @@
 #include "AP_GPS.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 namespace AP {
@@ -289,13 +290,13 @@ auto
 GPSComponent::publishReport(MAVLinkBus& bus) -> bool
 {
   mavlink_global_position_int_t payload;
-  payload.lat = lastGGA_.lat;
-  payload.lon = lastGGA_.lon;
-  payload.alt = lastGGA_.alt;
-  payload.relative_alt = lastGGA_.alt - initialHeight_;
+  payload.lat = static_cast<int32_t>(lastGGA_.lat * 1.0e7F);
+  payload.lon = static_cast<int32_t>(lastGGA_.lon * 1.0e7F);
+  payload.alt = lastGGA_.alt * 1.0e3F;
+  payload.relative_alt = (lastGGA_.alt - initialHeight_) * 1.0e3F;
   payload.time_boot_ms = timeSinceBootMs_;
-  payload.hdg = 0; // TODO : heading
-  payload.vx = 0;  // TODO : velocity
+  payload.hdg = 0; // TODO : heading (cdeg)
+  payload.vx = 0;  // TODO : velocity (cm/s)
   payload.vy = 0;
   payload.vz = 0;
 

@@ -305,7 +305,7 @@ public:
       publishToClients(message_);
     }
 
-    return 0;
+    return 1;
   }
 
   [[nodiscard]] auto read() -> int override { return globalRecvBuffer_->pop(); }
