@@ -7,17 +7,19 @@ NMEAParser::NMEAParser(NMEAInterpreter* interpreter)
 {
 }
 
-void
-NMEAParser::write(const char value)
+auto
+NMEAParser::write(const char value) -> bool
 {
   if (readSize_ >= (sizeof(readBuffer_) - 1)) {
     // TODO : failure
-    return;
+    return false;
   }
 
   if ((state_ == State::kNone) && (value != '$')) {
-    return;
+    return false;
   }
+
+  auto complete{ false };
 
   switch (state_) {
     case State::kNone:
@@ -72,18 +74,22 @@ NMEAParser::write(const char value)
         completeMessage();
         checksum_ = 0;
         state_ = State::kNone;
+        readSize_ = 0;
+        complete = true;
       } else if (value != '\r') {
         readBuffer_[readSize_] = value;
         readSize_++;
       }
       break;
   }
+
+  return complete;
 }
 
 namespace {
 
 [[nodiscard]] auto
-isHexDigit(char c)
+isHexDigit(char c) -> bool
 {
   if ((c >= '0') && (c <= '9')) {
     return true;

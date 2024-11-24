@@ -72,7 +72,7 @@ add_library(arc_autopilot
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT ARC_NO_WARNINGS)
   target_compile_options(arc_autopilot
     PRIVATE
-      -Wall -Wextra -Werror -Wfatal-errors -Wno-address-of-packed-member)
+      -Wall -Wextra -Werror -Wfatal-errors -Wno-address-of-packed-member -std=c++11)
 endif()
 
 target_include_directories(arc_autopilot

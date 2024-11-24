@@ -51,7 +51,8 @@ TEST(NMEA, ParseGGA)
   AP::NMEAParser parser(&interpreter);
   const char sentence[] = "$GPGGA,172814.0,3723.46587704,N,12202.26957864,W,2,6,1.2,18.893,M,-25.669,M,2.0,0031*4F\r\n";
   for (size_t i = 0; i < (sizeof(sentence) - 1); i++) {
-    parser.write(sentence[i]);
+    const auto isDone = i == (sizeof(sentence) - 2);
+    EXPECT_EQ(isDone, parser.write(sentence[i]));
   }
   EXPECT_TRUE(message.checksumPassed);
   EXPECT_EQ(message.talker, "GP");

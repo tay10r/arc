@@ -63,7 +63,14 @@ class NMEAParser final
 public:
   NMEAParser(NMEAInterpreter* interpreter);
 
-  void write(char value);
+  /**
+   * @brief Handles a single character of input.
+   *
+   * @param value The character to parse from the sentence.
+   *
+   * @return True if a complete sentence was decoded, false otherwise.
+   * */
+  [[nodiscard]] auto write(char value) -> bool;
 
 protected:
   enum class State

@@ -112,9 +112,12 @@ Lexer::remaining() const -> uint16_t
 }
 
 auto
-Lexer::produceToken(TokenKind kind, const uint8_t length) -> Token
+Lexer::produceToken(const TokenKind kind, const uint8_t length) -> Token
 {
-  Token token{ kind, length, offset_ };
+  Token token;
+  token.kind = kind;
+  token.length = length;
+  token.offset = offset_;
   offset_ += length;
   return token;
 }

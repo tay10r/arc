@@ -33,11 +33,13 @@ GPSSensor::setup(void* userData, GGA_Callback ggaFunc, VTG_Callback vtgFunc)
 auto
 GPSSensor::parseData(const char* buffer, const uint8_t size) -> bool
 {
+  auto gotMessage{ false };
+
   for (uint8_t i = 0; i < size; i++) {
-    parser_.write(buffer[i]);
+    gotMessage |= parser_.write(buffer[i]);
   }
 
-  return true;
+  return gotMessage;
 }
 
 void
