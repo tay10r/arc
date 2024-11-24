@@ -102,7 +102,15 @@ namespace {
 auto
 parseDegreeMinutes(const char* str, const uint8_t len, const uint8_t degDigits) -> float
 {
-  if (len != (7 + degDigits)) {
+  /* There should at least be:
+   *  - 2 or 3 degree digits
+   *  - 2 minutes digits
+   *  - 1 period
+   *  - 4 fractional minutes
+   *
+   * There might be more than 4 fractional minutes in a message.
+   */
+  if (len < (degDigits + 7)) {
     return false;
   }
 
@@ -120,8 +128,9 @@ parseDegreeMinutes(const char* str, const uint8_t len, const uint8_t degDigits) 
     min += static_cast<float>(str[degDigits + i] - '0');
   }
 
+  const auto remaining = len - (degDigits + 3);
   auto fraction{ 0.1F };
-  for (uint8_t i = 0; i < 4; i++) {
+  for (uint8_t i = 0; i < remaining; i++) {
     min += static_cast<float>(str[degDigits + 3 + i] - '0') * fraction;
     fraction *= 0.1F;
   }
