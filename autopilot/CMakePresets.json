@@ -18,6 +18,10 @@
         "ARC_AUTOPILOT_SIM": {
           "type": "BOOL",
           "value": "ON"
+        },
+        "ARC_AUTOPILOT_EXAMPLES": {
+          "type": "BOOL",
+          "value": "ON"
         }
       }
     }

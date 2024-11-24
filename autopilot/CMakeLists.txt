@@ -6,6 +6,7 @@ project(arc_autopilot
 
 option(ARC_AUTOPILOT_TESTS "Whether or not to build the unit tests." OFF)
 option(ARC_AUTOPILOT_SIM "Whether or not to build the simulation programs." OFF)
+option(ARC_AUTOPILOT_EXAMPLES "Whether or not to build the example programs." OFF)
 
 if(NOT TARGET arc::fake_arduino)
   add_subdirectory(../arduino arduino)
@@ -93,4 +94,8 @@ endif()
 
 if(ARC_AUTOPILOT_SIM)
   add_subdirectory(sim)
+endif()
+
+if(ARC_AUTOPILOT_EXAMPLES)
+  add_subdirectory(examples)
 endif()
