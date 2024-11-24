@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include <string>
+#include <sstream>
 
 namespace {
 
@@ -10,14 +10,26 @@ class FakeSensor final : public AP::GPSSensor
 {
 public:
   FakeSensor(std::string data)
-    : data_(std::move(data))
+    : stream_(std::move(data))
   {
   }
 
-  [[nodiscard]] auto read() -> bool override { return parseData(&data_[0], data_.size()); }
+  [[nodiscard]] auto read() -> bool override
+  {
+    while (stream_) {
+      char c{};
+      if (stream_.readsome(&c, 1) != 1) {
+        break;
+      }
+      if (parseData(&c, 1)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
 private:
-  std::string data_;
+  std::istringstream stream_;
 };
 
 } // namespace
@@ -47,8 +59,15 @@ TEST(GPS, ParseOther)
     *static_cast<bool*>(receivedGGAPtr) = true;
   };
   sensor.setup(&receivedGGA, onGGA, nullptr);
-  EXPECT_EQ(sensor.read(), true);
-  EXPECT_EQ(sensor.read(), true);
-  EXPECT_EQ(sensor.read(), true);
+
+  EXPECT_TRUE(sensor.read());
+  EXPECT_FALSE(receivedGGA);
+
+  EXPECT_TRUE(sensor.read());
+  EXPECT_FALSE(receivedGGA);
+
+  EXPECT_TRUE(sensor.read());
   EXPECT_TRUE(receivedGGA);
+
+  EXPECT_FALSE(sensor.read());
 }
