@@ -1,4 +1,7 @@
 #include "AP_Program.h"
+#include "AP_UbloxGPS.h"
+
+#include <Wire.h>
 
 namespace {
 
@@ -15,11 +18,15 @@ AP::Program program;
 
 ClockImpl clock;
 
+AP::UbloxGPSSensor gpsSensor(&Wire);
+
 } // namespace
 
 void setup()
 {
-  program.setup(&Serial, &clock);
+  SerialUSB.begin(115200);
+  Wire.begin();
+  program.setup(&SerialUSB, &clock, &gpsSensor);
 }
 
 void loop()
