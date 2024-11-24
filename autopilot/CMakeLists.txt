@@ -26,10 +26,12 @@ add_library(arc_autopilot
   AP_Magnetometer.cpp
   AP_MMC5983MA.h
   AP_MMC5983MA.cpp
-  AP_GPS.h
-  AP_GPS.cpp
   AP_NMEA.h
   AP_NMEA.cpp
+  AP_GPS.h
+  AP_GPS.cpp
+  AP_UbloxGPS.h
+  AP_UbloxGPS.cpp
   AP_Random.h
   AP_Random.cpp
   AP_WGS84.h
