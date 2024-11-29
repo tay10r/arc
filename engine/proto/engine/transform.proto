@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "engine/float3.proto";
+
+package engine;
+
+message Transform
+{
+  Float3 position = 1;
+
+  Float3 rotation = 2;
+
+  Float3 scale = 3;
+}

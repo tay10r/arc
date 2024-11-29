@@ -44,8 +44,6 @@ add_executable(main WIN32
   main.cpp
   NetTest.h
   NetTest.cpp
-  GcsTest.h
-  GcsTest.cpp
   Simulation.h
   Simulation.cpp
   Renderer.h
@@ -61,3 +59,7 @@ target_link_libraries(main
     arc::sim
     arc::fake_arduino
     arc::autopilot)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(main PUBLIC -Wno-address-of-packed-member)
+endif()

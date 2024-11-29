@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package engine;
+
+message Camera
+{
+  float fov = 1;
+
+  float near = 2;
+
+  float far = 3;
+}

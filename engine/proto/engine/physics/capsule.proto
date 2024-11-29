@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package engine.physics;
+
+message Capsule
+{
+  float radius = 1;
+
+  float height = 2;
+}

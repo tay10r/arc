@@ -190,4 +190,42 @@ ShaderImpl::use()
   glUseProgram(id_);
 }
 
+void
+ShaderImpl::syncUniforms()
+{
+  for (auto& entry : vec3Uniforms_) {
+    glUniform3fv(entry.first, 1, entry.second);
+  }
+
+  for (auto& entry : mat4Uniforms_) {
+    glUniformMatrix4fv(entry.first, 1, GL_FALSE, entry.second);
+  }
+}
+
+auto
+ShaderImpl::bindUniformMat4(const char* name, const float* data) -> bool
+{
+  return bind(mat4Uniforms_, name, data);
+}
+
+auto
+ShaderImpl::bindUniformVec3(const char* name, const float* data) -> bool
+{
+  return bind(vec3Uniforms_, name, data);
+}
+auto
+ShaderImpl::bind(std::map<GLint, const float*>& m, const char* name, const float* data) -> bool
+{
+  const auto loc = glGetUniformLocation(id_, name);
+  if (loc >= 0) {
+    auto it = m.find(loc);
+    if (it == m.end()) {
+      it = m.emplace(id_, nullptr).first;
+    }
+    it->second = data;
+    return true;
+  }
+  return false;
+}
+
 } // namespace vz

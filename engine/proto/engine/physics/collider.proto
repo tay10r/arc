@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "engine/physics/box.proto";
+import "engine/physics/sphere.proto";
+import "engine/physics/capsule.proto";
+import "engine/transform.proto";
+
+package engine.physics;
+
+message Collider
+{
+  uint32 id = 1;
+
+  Transform transform = 2;
+
+  oneof shape {
+    Box box = 3;
+    Sphere sphere = 4;
+    Capsule capsule = 5;
+  }
+}

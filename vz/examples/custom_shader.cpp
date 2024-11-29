@@ -4,6 +4,8 @@
 
 #include <cstdlib>
 
+#include "stb_image_write.h"
+
 namespace {
 
 const char vertSrc[] = R"(
@@ -14,8 +16,8 @@ out lowp vec2 uv;
 void
 main()
 {
-    uv = position;
-    gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
+    uv = (position + 1.0) * 0.5;
+    gl_Position = vec4(position, 0.0, 1.0);
 }
 )";
 
@@ -41,12 +43,14 @@ main() -> int
     return EXIT_FAILURE;
   }
 
-  vz::setCameraPosition(-5, 0, -1);
-
-  const float vertexData[] = { 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1 };
+#if 1
+  const float vertexData[] = { -1, 1, -1, -1, 1, -1, 1, -1, 1, 1, -1, 1 };
   auto vertices = vz::createVertexArray();
   vertices->uploadData(vertexData, sizeof(vertexData));
   vertices->setVertexSizes({ 2 });
+#else /* Alternatively for screen quads you can do this: */
+  auto* vertices = vz::getScreenQuad();
+#endif
 
   auto* shader = vz::createShader();
   if (!shader->build(vertSrc, fragSrc)) {
@@ -57,11 +61,13 @@ main() -> int
 
   shader->use();
 
-  while (vz::beginFrame()) {
-    vertices->draw(GL_TRIANGLES);
-    vz::endFrame();
-  }
-
+  const auto w{ 640 };
+  const auto h{ 480 };
+  auto* framebuffer = vz::createFramebuffer(w, h, 1, /*includeDepthBuffer=*/false);
+  framebuffer->use();
+  vertices->draw(GL_TRIANGLES);
+  const auto pixels = framebuffer->readPixels();
+  stbi_write_png("result.png", w, h, 4, pixels.data(), w * 4);
   vz::teardown();
 
   return EXIT_SUCCESS;

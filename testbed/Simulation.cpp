@@ -40,7 +40,9 @@ public:
   {
     if (rxSize_ < rxBuffer_.size()) {
       rxSize_++;
+      return 1;
     }
+    return 0;
   }
 
   [[nodiscard]] auto hostRead() -> std::vector<std::uint8_t>
@@ -96,7 +98,7 @@ public:
   {
   }
 
-  void setup() override { program_.setup(&fakeStream_, &fakeClock_); }
+  void setup() override { program_.setup(&fakeStream_, &fakeClock_, AP::GPSSensor::null()); }
 
   void loop(const float timeDelta) override
   {

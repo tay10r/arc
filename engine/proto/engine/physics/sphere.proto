@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package engine.physics;
+
+message Sphere
+{
+  float radius = 1;
+}

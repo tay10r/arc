@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "engine/float3.proto";
+
+package engine.physics;
+
+message Box
+{
+  Float3 extents = 1;
+}

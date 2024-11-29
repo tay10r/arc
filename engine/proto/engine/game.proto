@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "engine/scene.proto";
+
+package engine;
+
+message Game
+{
+  repeated Scene scenes = 1;
+
+  uint32 idGenerator = 2;
+}

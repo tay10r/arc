@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+import "engine/physics/collider.proto";
+import "engine/transform.proto";
+
+package engine.physics;
+
+enum BodyType
+{
+  STATIC = 0;
+  DYNAMIC = 1;
+  KINEMATIC = 2;
+}
+
+message Body
+{
+  int32 id = 1;
+
+  string name = 2;
+
+  BodyType type = 3;
+
+  Transform transform = 4;
+
+  repeated Collider colliders = 5;
+}

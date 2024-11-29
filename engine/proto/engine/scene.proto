@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+import "engine/transform.proto";
+
+import "engine/physics/body.proto";
+import "engine/camera.proto";
+import "engine/mesh.proto";
+
+package engine;
+
+/**
+ * This is the root object for a scene.
+ */
+message Scene
+{
+  /**
+   * The programatically assigned ID.
+   */
+  uint32 id = 1;
+
+  /**
+   * The name of the scene, purely for readability purposes.
+   */
+  string name = 2;
+
+  /**
+   * The collision of physics bodies to be placed in the scene.
+   */
+  repeated physics.Body bodies = 3;
+
+  /**
+   * Cameras in the scene that aren't associated with a specific physics body.
+   */
+  repeated Camera cameras = 4;
+
+  /**
+   * Meshes in the scene that aren't associated with a specific physics body.
+   */
+  repeated Mesh meshes = 5;
+}

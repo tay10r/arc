@@ -4,6 +4,10 @@
 
 #include <GLES3/gl3.h>
 
+#include <string>
+
+#include <map>
+
 namespace vz {
 
 class ShaderImpl final : public Shader
@@ -27,7 +31,15 @@ public:
 
   void use() override;
 
+  void syncUniforms() override;
+
+  auto bindUniformMat4(const char* name, const float* data) -> bool override;
+
+  auto bindUniformVec3(const char* name, const float* data) -> bool override;
+
 protected:
+  [[nodiscard]] auto bind(std::map<GLint, const float*>& m, const char* name, const float* data) -> bool;
+
   void defineImpl(const char* name, const char* value) override;
 
 private:
@@ -40,6 +52,10 @@ private:
   std::string vertLog_;
 
   std::string linkLog_;
+
+  std::map<GLint, const float*> vec3Uniforms_;
+
+  std::map<GLint, const float*> mat4Uniforms_;
 };
 
 } // namespace vz

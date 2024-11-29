@@ -5,6 +5,8 @@
 #include <vector>
 
 #include <cctype>
+#include <cstdlib>
+#include <cstring>
 
 #include <GLFW/glfw3.h>
 
@@ -16,9 +18,17 @@
 
 #include <implot.h>
 
+#include <cmrc/cmrc.hpp>
+
 #include "Camera.h"
+#include "Framebuffer.h"
 #include "Shader.h"
 #include "VertexArray.h"
+
+CMRC_DECLARE(vz_font);
+CMRC_DECLARE(vz_shaders);
+
+#include <iostream>
 
 namespace vz {
 
@@ -54,6 +64,8 @@ public:
     }
   }
 
+  void clear() { objects_.clear(); }
+
 private:
   std::set<std::unique_ptr<T>, Comparator> objects_;
 };
@@ -70,6 +82,7 @@ public:
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
     auto* monitor = glfwGetPrimaryMonitor();
 
@@ -97,11 +110,23 @@ public:
 
     ImGui_ImplOpenGL3_Init("#version 300 es");
 
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    loadFont();
+
+    setupStyle();
+
+    setupScreenQuad();
+
     return true;
   }
 
   void teardown()
   {
+    shaders_.clear();
+    vertexArrays_.clear();
+    framebuffers_.clear();
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -145,11 +170,108 @@ public:
     glfwSwapBuffers(window_);
   }
 
+  void renderGrid()
+  {
+    auto* shader = getGridShader();
+    if (!shader) {
+      return;
+    }
+
+    shader->use();
+
+    screenQuad_->draw(GL_TRIANGLES);
+  }
+
   [[nodiscard]] auto getCamera() -> Camera& { return camera_; }
 
   [[nodiscard]] auto getShaders() -> ObjectStore<Shader>& { return shaders_; }
 
   [[nodiscard]] auto getVertexArrays() -> ObjectStore<VertexArray>& { return vertexArrays_; }
+
+  [[nodiscard]] auto getFramebuffers() -> ObjectStore<Framebuffer>& { return framebuffers_; }
+
+  [[nodiscard]] auto getScreenQuad() -> VertexArray* { return screenQuad_; }
+
+  [[nodiscard]] auto getMeshShader() -> Shader*
+  {
+    if (meshShader_) {
+      return meshShader_;
+    }
+
+    meshShader_ = shaders_.add(new ShaderImpl());
+
+    if (!buildInternalShader(meshShader_, "shaders/mesh.vert", "shaders/mesh.frag")) {
+      meshShader_->dumpLogs(std::cerr);
+      return nullptr;
+    }
+
+    return meshShader_;
+  }
+
+protected:
+  void loadFont()
+  {
+    const auto fs = cmrc::vz_font::get_filesystem();
+    const auto file = fs.open("font/DroidSans.ttf");
+    auto* data = std::malloc(file.size());
+    if (!data) {
+      return;
+    }
+    std::memcpy(data, file.begin(), file.size());
+    auto& io = ImGui::GetIO();
+    io.Fonts->AddFontFromMemoryTTF(data, file.size(), 18.0F);
+    io.Fonts->Build();
+  }
+
+  void setupStyle()
+  {
+    auto& style = ImGui::GetStyle();
+    style.FrameRounding = 3;
+    style.WindowRounding = 3;
+    style.ChildRounding = 3;
+    style.PopupRounding = 3;
+    style.WindowBorderSize = 0;
+  }
+
+  void setupScreenQuad()
+  {
+    screenQuad_ = vertexArrays_.add(new VertexArrayImpl());
+
+    const float data[12]{ -1, -1, 1, -1, 1, 1, 1, 1, -1, 1, -1, -1 };
+
+    screenQuad_->uploadData(data, sizeof(data), GL_STATIC_DRAW);
+
+    screenQuad_->setVertexSizes({ 2 });
+  }
+
+  static auto openShader(const char* path) -> std::string
+  {
+    const auto fs = cmrc::vz_shaders::get_filesystem();
+    const auto file = fs.open(path);
+    return std::string(file.begin(), file.size());
+  }
+
+  [[nodiscard]] auto buildInternalShader(Shader* shader, const char* vertPath, const char* fragPath) -> bool
+  {
+    const auto vertSource = openShader(vertPath);
+    const auto fragSource = openShader(fragPath);
+    return shader->build(vertSource.c_str(), fragSource.c_str());
+  }
+
+  [[nodiscard]] auto getGridShader() -> Shader*
+  {
+    if (gridShader_) {
+      return gridShader_;
+    }
+
+    gridShader_ = shaders_.add(new ShaderImpl());
+
+    if (!buildInternalShader(gridShader_, "shaders/grid.vert", "shaders/grid.frag")) {
+      return nullptr;
+    }
+
+    return gridShader_;
+  }
 
 private:
   GLFWwindow* window_{};
@@ -159,6 +281,14 @@ private:
   ObjectStore<Shader> shaders_;
 
   ObjectStore<VertexArray> vertexArrays_;
+
+  ObjectStore<Framebuffer> framebuffers_;
+
+  VertexArray* screenQuad_{};
+
+  Shader* gridShader_{};
+
+  Shader* meshShader_{};
 };
 
 std::unique_ptr<GlobalState> globalState;
@@ -176,6 +306,7 @@ void
 teardown()
 {
   globalState->teardown();
+  globalState.reset();
 }
 
 auto
@@ -234,6 +365,18 @@ setCameraInteractive(bool interactive)
   globalState->getCamera().interactive = interactive;
 }
 
+void
+renderGrid()
+{
+  globalState->renderGrid();
+}
+
+auto
+getScreenQuad() -> VertexArray*
+{
+  return globalState->getScreenQuad();
+}
+
 auto
 createShader() -> Shader*
 {
@@ -247,6 +390,12 @@ destroyShader(Shader* shader)
 }
 
 auto
+getMeshShader() -> Shader*
+{
+  return globalState->getMeshShader();
+}
+
+auto
 createVertexArray() -> VertexArray*
 {
   return globalState->getVertexArrays().add(new VertexArrayImpl());
@@ -256,6 +405,15 @@ void
 destroyVertexArray(VertexArray* vertexArray)
 {
   globalState->getVertexArrays().destroy(vertexArray);
+}
+
+auto
+createFramebuffer(int width, int height, int numAttachments, bool includeDepth) -> Framebuffer*
+{
+  auto& framebuffers = globalState->getFramebuffers();
+  auto* framebuffer = framebuffers.add(new FramebufferImpl());
+  (void)static_cast<FramebufferImpl*>(framebuffer)->setup(width, height, numAttachments, includeDepth);
+  return framebuffer;
 }
 
 } // namespace vz

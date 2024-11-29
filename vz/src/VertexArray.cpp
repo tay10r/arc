@@ -44,6 +44,8 @@ VertexArrayImpl::setVertexSizes(const std::vector<GLint>& sizes)
 
   glBindVertexArray(vertexArray_);
 
+  glBindBuffer(GL_ARRAY_BUFFER, buffer_);
+
   GLsizeiptr offset{};
 
   for (Size i = 0; i < sizes.size(); i++) {
@@ -59,6 +61,8 @@ VertexArrayImpl::setVertexSizes(const std::vector<GLint>& sizes)
 void
 VertexArrayImpl::draw(const GLenum mode, const GLsizei count, const GLint first)
 {
+  glBindVertexArray(vertexArray_);
+
   glDrawArrays(mode, first, count);
 }
 
