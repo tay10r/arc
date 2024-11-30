@@ -213,6 +213,7 @@ ShaderImpl::bindUniformVec3(const char* name, const float* data) -> bool
 {
   return bind(vec3Uniforms_, name, data);
 }
+
 auto
 ShaderImpl::bind(std::map<GLint, const float*>& m, const char* name, const float* data) -> bool
 {
@@ -220,7 +221,7 @@ ShaderImpl::bind(std::map<GLint, const float*>& m, const char* name, const float
   if (loc >= 0) {
     auto it = m.find(loc);
     if (it == m.end()) {
-      it = m.emplace(id_, nullptr).first;
+      it = m.emplace(loc, nullptr).first;
     }
     it->second = data;
     return true;
